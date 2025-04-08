@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { dataService } from "@/services/mockData";
-import { Student, Attendance } from "@/types/models";
+import { Student } from "@/types/models";
+import type { Attendance as AttendanceType } from "@/types/models";
 import {
   Card,
   CardContent,
@@ -46,7 +46,7 @@ const Attendance: React.FC = () => {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
   const [students, setStudents] = useState<Student[]>(dataService.getStudents());
-  const [attendanceData, setAttendanceData] = useState<Attendance[]>(dataService.getAttendance());
+  const [attendanceData, setAttendanceData] = useState<AttendanceType[]>(dataService.getAttendance());
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -56,8 +56,8 @@ const Attendance: React.FC = () => {
     class: string;
     section: string;
   } | null>(null);
-  const [todayAttendance, setTodayAttendance] = useState<Attendance[]>([]);
-  const [initialAttendance, setInitialAttendance] = useState<Attendance[]>([]);
+  const [todayAttendance, setTodayAttendance] = useState<AttendanceType[]>([]);
+  const [initialAttendance, setInitialAttendance] = useState<AttendanceType[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -96,14 +96,12 @@ const Attendance: React.FC = () => {
       (s) => s.class === className && s.section === section
     );
 
-    // Get existing attendance records for the selected date
     const existingAttendance = attendanceData.filter(
       (a) => a.date === selectedDate &&
       studentsInClass.some((s) => s.id === a.studentId)
     );
 
-    // Create attendance records for students who don't have one
-    const newAttendance: Attendance[] = [];
+    const newAttendance: AttendanceType[] = [];
     
     studentsInClass.forEach((student) => {
       const hasRecord = existingAttendance.some(
@@ -116,7 +114,7 @@ const Attendance: React.FC = () => {
           studentId: student.id,
           studentName: student.fullName,
           date: selectedDate,
-          status: "present", // Default status
+          status: "present",
           remarks: "",
         });
       }
@@ -124,7 +122,7 @@ const Attendance: React.FC = () => {
 
     const combinedAttendance = [...existingAttendance, ...newAttendance];
     setTodayAttendance(combinedAttendance);
-    setInitialAttendance([...combinedAttendance]); // Keep a copy for comparison
+    setInitialAttendance([...combinedAttendance]);
     setIsAttendanceListOpen(true);
   };
 
@@ -151,7 +149,6 @@ const Attendance: React.FC = () => {
   };
 
   const handleSaveAttendance = () => {
-    // Add new/update existing attendance records
     const updatedAttendanceData = [...attendanceData];
     
     todayAttendance.forEach((record) => {
@@ -363,12 +360,10 @@ const Attendance: React.FC = () => {
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => {
-                                  // Filter attendance records for this student
                                   const studentRecords = attendanceData.filter(
                                     a => a.studentId === student.id
                                   );
                                   
-                                  // TODO: Show detailed attendance history dialog
                                   console.log("Student attendance records:", studentRecords);
                                 }}
                               >
@@ -387,7 +382,6 @@ const Attendance: React.FC = () => {
         )}
       </div>
 
-      {/* Attendance List Dialog */}
       <Dialog open={isAttendanceListOpen} onOpenChange={setIsAttendanceListOpen}>
         <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>

@@ -47,6 +47,7 @@ import {
   Edit,
   FileText,
   DollarSign,
+  Plus
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
