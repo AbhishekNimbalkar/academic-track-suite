@@ -6,7 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   UserCircle, Users, BookOpen, CalendarDays, 
-  DollarSign, BarChart, LogOut, School
+  DollarSign, BarChart, LogOut, School,
+  FileText, Bell, Settings, GraduationCap
 } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
@@ -19,19 +20,44 @@ export const Sidebar: React.FC = () => {
     { label: "Academics", path: "/academics", icon: <BookOpen size={18} /> },
     { label: "Attendance", path: "/attendance", icon: <CalendarDays size={18} /> },
     { label: "Fee Management", path: "/fees", icon: <DollarSign size={18} /> },
+    { label: "Documents", path: "/documents", icon: <FileText size={18} /> },
+    { label: "Notifications", path: "/notifications", icon: <Bell size={18} /> },
+    { label: "Settings", path: "/settings", icon: <Settings size={18} /> },
   ];
 
   const teacherMenuItems = [
     { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
+    { label: "My Classes", path: "/my-classes", icon: <GraduationCap size={18} /> },
     { label: "Students", path: "/students", icon: <Users size={18} /> },
     { label: "Academics", path: "/academics", icon: <BookOpen size={18} /> },
     { label: "Attendance", path: "/attendance", icon: <CalendarDays size={18} /> },
+    { label: "Documents", path: "/documents", icon: <FileText size={18} /> },
   ];
 
-  const menuItems = user?.role === "admin" ? adminMenuItems : teacherMenuItems;
+  const staffMenuItems = [
+    { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
+    { label: "Students", path: "/students", icon: <Users size={18} /> },
+    { label: "Admissions", path: "/admissions", icon: <UserCircle size={18} /> },
+    { label: "Fee Management", path: "/fees", icon: <DollarSign size={18} /> },
+  ];
+
+  let menuItems;
+  switch (user?.role) {
+    case "admin":
+      menuItems = adminMenuItems;
+      break;
+    case "teacher":
+      menuItems = teacherMenuItems;
+      break;
+    case "staff":
+      menuItems = staffMenuItems;
+      break;
+    default:
+      menuItems = [];
+  }
 
   return (
-    <div className="hidden md:flex flex-col w-64 bg-white shadow-md">
+    <div className="hidden md:flex flex-col h-screen w-64 bg-white shadow-md overflow-y-auto">
       <div className="p-4">
         <div className="flex items-center space-x-2">
           <School className="h-8 w-8 text-primary" />

@@ -3,6 +3,7 @@ import React from "react";
 import { Sidebar } from "./Sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
+import { MobileNavbar } from "./MobileNavbar";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -26,8 +27,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
-        {children}
+      <div className="flex-1 flex flex-col">
+        <MobileNavbar />
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );

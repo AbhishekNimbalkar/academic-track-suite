@@ -24,6 +24,7 @@ const MOCK_USERS = [
     email: "admin@school.com",
     password: "password123",
     role: "admin" as const,
+    permissions: ["all"],
   },
   {
     id: "2",
@@ -31,6 +32,17 @@ const MOCK_USERS = [
     email: "teacher@school.com",
     password: "password123",
     role: "teacher" as const,
+    permissions: ["view_students", "mark_attendance", "enter_marks"],
+    assignedClasses: ["9", "10"],
+    subjects: ["Mathematics", "Physics"],
+  },
+  {
+    id: "3",
+    name: "Staff User",
+    email: "staff@school.com",
+    password: "password123",
+    role: "staff" as const,
+    permissions: ["view_students", "manage_admissions"],
   },
 ];
 
