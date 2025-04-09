@@ -28,6 +28,7 @@ export const generateMockStudents = (count: number): Student[] => {
         Math.floor(Math.random() * 12),
         Math.floor(Math.random() * 28) + 1
       ).toISOString().split("T")[0],
+      admissionClass: studentClass, // Set admission class to current class for mock data
       parentName: `Parent of Student ${index + 1}`,
       parentEmail: `parent${index + 1}@example.com`,
       parentPhone: `+91${Math.floor(Math.random() * 10000000000).toString().padStart(10, "0")}`,
@@ -41,6 +42,7 @@ export const generateMockStudents = (count: number): Student[] => {
 export const generateMockMarks = (students: Student[]): Marks[] => {
   const subjects = ["Mathematics", "Science", "English", "Social Studies", "Hindi"];
   const academicYears = ["2022-2023", "2023-2024"];
+  const examTypes = ["midterm", "final", "quarterly", "halfYearly"] as const;
   
   return students.map((student) => {
     return {
@@ -58,6 +60,7 @@ export const generateMockMarks = (students: Student[]): Marks[] => {
           subjectName: subject,
           marksObtained: obtained,
           totalMarks: total,
+          examType: examTypes[Math.floor(Math.random() * examTypes.length)],
         };
       }),
     };
