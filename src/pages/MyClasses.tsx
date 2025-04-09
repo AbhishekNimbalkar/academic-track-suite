@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Search,
@@ -69,7 +69,6 @@ const MyClasses: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState<string>("ongoing");
   const [isAddMarksheetOpen, setIsAddMarksheetOpen] = useState(false);
 
-  // Mock class data for teacher
   const [classes, setClasses] = useState<ClassSection[]>([
     {
       id: "CLS001",
@@ -113,7 +112,6 @@ const MyClasses: React.FC = () => {
     }
   ]);
 
-  // Mock students data
   const [students, setStudents] = useState([
     {
       id: "STU001",
@@ -165,7 +163,6 @@ const MyClasses: React.FC = () => {
     }
   ]);
 
-  // Filter classes based on search query
   const filteredClasses = classes.filter(cls => {
     const matchesSearch = 
       `Class ${cls.class} ${cls.section}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -174,7 +171,6 @@ const MyClasses: React.FC = () => {
     return matchesSearch;
   });
 
-  // Filter students for selected class
   const filteredStudents = students.filter(student => 
     selectedClass && 
     student.class === selectedClass.class && 
@@ -390,7 +386,6 @@ const MyClasses: React.FC = () => {
         </Card>
       </div>
 
-      {/* Class Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
@@ -504,7 +499,6 @@ const MyClasses: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add Marks Dialog */}
       <Dialog open={isAddMarksheetOpen} onOpenChange={setIsAddMarksheetOpen}>
         <DialogContent>
           <DialogHeader>

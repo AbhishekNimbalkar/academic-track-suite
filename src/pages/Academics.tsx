@@ -55,11 +55,11 @@ const Academics: React.FC = () => {
     section: "",
     academicYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
     subjects: [
-      { subjectName: "Mathematics", marksObtained: 0, totalMarks: 100 },
-      { subjectName: "Science", marksObtained: 0, totalMarks: 100 },
-      { subjectName: "English", marksObtained: 0, totalMarks: 100 },
-      { subjectName: "Social Studies", marksObtained: 0, totalMarks: 100 },
-      { subjectName: "Hindi", marksObtained: 0, totalMarks: 100 },
+      { subjectName: "Mathematics", marksObtained: 0, totalMarks: 100, examType: "midterm" },
+      { subjectName: "Science", marksObtained: 0, totalMarks: 100, examType: "midterm" },
+      { subjectName: "English", marksObtained: 0, totalMarks: 100, examType: "midterm" },
+      { subjectName: "Social Studies", marksObtained: 0, totalMarks: 100, examType: "midterm" },
+      { subjectName: "Hindi", marksObtained: 0, totalMarks: 100, examType: "midterm" },
     ],
   });
   const { toast } = useToast();
