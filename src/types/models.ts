@@ -12,6 +12,11 @@ export interface Student {
   parentPhone: string;
   address: string;
   medicalInfo: string;
+  caste?: string;  // Added for admission form
+  residentialType?: "residential" | "non-residential"; // Added for admission form
+  aadhaarNumber?: string; // Added for admission form
+  panCardNumber?: string; // Added for admission form
+  imageUrl?: string; // Added for student image
   academicHistory?: AcademicRecord[];
 }
 

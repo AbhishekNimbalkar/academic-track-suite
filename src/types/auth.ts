@@ -36,6 +36,8 @@ export const ROLE_PERMISSIONS: RolePermissions = {
     "generate_certificates",
     "view_all_records",
     "manage_stationary",
+    "manage_admissions",  // Added for admission form
+    "promote_students",   // Added for promotion module
   ],
   class_teacher: [
     "manage_marks",
@@ -43,6 +45,7 @@ export const ROLE_PERMISSIONS: RolePermissions = {
     "generate_marksheets",
     "create_student_applications",
     "view_students",
+    "manage_admissions",  // Added for admission form
   ],
   accountant: [
     "collect_fees",

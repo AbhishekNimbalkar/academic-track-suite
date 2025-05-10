@@ -8,7 +8,7 @@ import {
   UserCircle, Users, BookOpen, CalendarDays, 
   DollarSign, BarChart, LogOut, School,
   FileText, Bell, Settings, GraduationCap,
-  Book, PiggyBank, Receipt
+  Book, PiggyBank, Receipt, UserPlus
 } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
@@ -18,6 +18,7 @@ export const Sidebar: React.FC = () => {
     { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
     { label: "Students", path: "/students", icon: <Users size={18} /> },
     { label: "Teachers", path: "/teachers", icon: <UserCircle size={18} /> },
+    { label: "Admission Form", path: "/student-admission", icon: <UserPlus size={18} /> },
     { label: "Academics", path: "/academics", icon: <BookOpen size={18} /> },
     { label: "Attendance", path: "/attendance", icon: <CalendarDays size={18} /> },
     { label: "Fee Management", path: "/fees", icon: <DollarSign size={18} /> },
@@ -32,6 +33,7 @@ export const Sidebar: React.FC = () => {
     { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
     { label: "My Classes", path: "/my-classes", icon: <GraduationCap size={18} /> },
     { label: "Students", path: "/students", icon: <Users size={18} /> },
+    { label: "Admission Form", path: "/student-admission", icon: <UserPlus size={18} /> },
     { label: "Academics", path: "/academics", icon: <BookOpen size={18} /> },
     { label: "Attendance", path: "/attendance", icon: <CalendarDays size={18} /> },
     { label: "Applications", path: "/applications", icon: <FileText size={18} /> },
