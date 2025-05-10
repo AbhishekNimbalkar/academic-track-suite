@@ -1,11 +1,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { AuthState, User } from "@/types/auth";
+import { AuthState, User, ROLE_PERMISSIONS } from "@/types/auth";
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  hasPermission: (permission: string) => boolean;
 }
 
 const defaultState: AuthState = {
@@ -16,7 +17,7 @@ const defaultState: AuthState = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration
+// Mock users for demonstration with updated roles
 const MOCK_USERS = [
   {
     id: "1",
@@ -24,25 +25,41 @@ const MOCK_USERS = [
     email: "admin@school.com",
     password: "password123",
     role: "admin" as const,
-    permissions: ["all"],
+    permissions: ROLE_PERMISSIONS.admin,
   },
   {
     id: "2",
-    name: "Teacher User",
+    name: "Class Teacher",
     email: "teacher@school.com",
     password: "password123",
-    role: "teacher" as const,
-    permissions: ["view_students", "mark_attendance", "enter_marks"],
+    role: "class_teacher" as const,
+    permissions: ROLE_PERMISSIONS.class_teacher,
     assignedClasses: ["9", "10"],
     subjects: ["Mathematics", "Physics"],
   },
   {
     id: "3",
-    name: "Staff User",
-    email: "staff@school.com",
+    name: "Accountant",
+    email: "accountant@school.com",
     password: "password123",
-    role: "staff" as const,
-    permissions: ["view_students", "manage_admissions"],
+    role: "accountant" as const,
+    permissions: ROLE_PERMISSIONS.accountant,
+  },
+  {
+    id: "4",
+    name: "Stationary Head",
+    email: "stationary@school.com",
+    password: "password123",
+    role: "stationary_head" as const,
+    permissions: ROLE_PERMISSIONS.stationary_head,
+  },
+  {
+    id: "5",
+    name: "Library Head",
+    email: "library@school.com",
+    password: "password123",
+    role: "library_head" as const,
+    permissions: ROLE_PERMISSIONS.library_head,
   },
 ];
 
@@ -118,12 +135,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  // Add a helper function to check if the user has a specific permission
+  const hasPermission = (permission: string): boolean => {
+    if (!state.user || !state.user.permissions) {
+      return false;
+    }
+    return state.user.permissions.includes(permission);
+  };
+
   return (
     <AuthContext.Provider
       value={{
         ...state,
         login,
         logout,
+        hasPermission,
       }}
     >
       {children}

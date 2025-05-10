@@ -19,6 +19,15 @@ import Settings from "./pages/Settings";
 import Admissions from "./pages/Admissions";
 import MyClasses from "./pages/MyClasses";
 import NotFound from "./pages/NotFound";
+import ResidentialFees from "./pages/ResidentialFees";
+import NonResidentialFees from "./pages/NonResidentialFees";
+import Expenses from "./pages/Expenses";
+import ResidentialStudents from "./pages/ResidentialStudents";
+import Books from "./pages/Books";
+import BookIssues from "./pages/BookIssues";
+import Applications from "./pages/Applications";
+import Library from "./pages/Library";
+import Stationary from "./pages/Stationary";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +52,15 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/admissions" element={<Admissions />} />
             <Route path="/my-classes" element={<MyClasses />} />
+            <Route path="/residential-fees" element={<ResidentialFees />} />
+            <Route path="/non-residential-fees" element={<NonResidentialFees />} />
+            <Route path="/expenses" element={<Expenses />} />
+            <Route path="/residential-students" element={<ResidentialStudents />} />
+            <Route path="/books" element={<Books />} />
+            <Route path="/book-issues" element={<BookIssues />} />
+            <Route path="/applications" element={<Applications />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/stationary" element={<Stationary />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

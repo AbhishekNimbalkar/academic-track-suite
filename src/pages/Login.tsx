@@ -101,7 +101,10 @@ const Login: React.FC = () => {
           </p>
           <div className="mt-2 text-xs text-muted-foreground space-y-1">
             <p><strong>Admin:</strong> admin@school.com / password123</p>
-            <p><strong>Teacher:</strong> teacher@school.com / password123</p>
+            <p><strong>Class Teacher:</strong> teacher@school.com / password123</p>
+            <p><strong>Accountant:</strong> accountant@school.com / password123</p>
+            <p><strong>Stationary Head:</strong> stationary@school.com / password123</p>
+            <p><strong>Library Head:</strong> library@school.com / password123</p>
           </div>
         </div>
       </div>
