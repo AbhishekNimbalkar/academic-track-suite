@@ -4,7 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PiggyBank, Cash, Users } from "lucide-react";
+import { PiggyBank, Banknote, Users } from "lucide-react"; // Fixed: changed Cash to Banknote
 import { Navigate } from "react-router-dom";
 
 const Stationary: React.FC = () => {

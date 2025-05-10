@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { dataService } from "@/services/mockData";
@@ -42,7 +41,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Academics: React.FC = () => {
   const { user } = useAuth();
-  const isTeacher = user?.role === "teacher";
+  const isTeacher = user?.role === "class_teacher"; // Fixed: changed "teacher" to "class_teacher"
   const [students, setStudents] = useState<Student[]>(dataService.getStudents());
   const [marksData, setMarksData] = useState<Marks[]>(dataService.getMarks());
   const [searchQuery, setSearchQuery] = useState("");

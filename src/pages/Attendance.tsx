@@ -44,7 +44,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Attendance: React.FC = () => {
   const { user } = useAuth();
-  const isTeacher = user?.role === "teacher";
+  const isTeacher = user?.role === "class_teacher"; // Fixed: changed "teacher" to "class_teacher"
   const [students, setStudents] = useState<Student[]>(dataService.getStudents());
   const [attendanceData, setAttendanceData] = useState<AttendanceType[]>(dataService.getAttendance());
   const [searchQuery, setSearchQuery] = useState("");
