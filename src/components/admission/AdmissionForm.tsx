@@ -1,327 +1,280 @@
 
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, Upload, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Student } from "@/types/models";
+import { format } from "date-fns";
+import { toast } from "@/components/ui/use-toast";
 
-// Define the validation schema for the form
-const formSchema = z.object({
-  registrationNumber: z.string().min(1, { message: "Registration number is required" }),
-  studentName: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  dateOfBirth: z.string().min(1, { message: "Date of birth is required" }),
-  parentName: z.string().min(2, { message: "Parent name is required" }),
-  caste: z.string().optional(),
-  residentialType: z.enum(["residential", "non-residential"]),
-  parentPhone: z.string().min(10, { message: "Valid phone number is required" }),
-  address: z.string().min(5, { message: "Address is required" }),
-  aadhaarNumber: z.string().min(12, { message: "Valid Aadhaar number is required" }).max(12),
-  panCardNumber: z.string().optional(),
-  studentImage: z.any().optional()
-});
+interface AdmissionFormProps {
+  onSubmit: (data: Omit<Student, "id">) => void;
+}
 
-type FormValues = z.infer<typeof formSchema>;
-
-export const AdmissionForm: React.FC = () => {
+export function AdmissionForm({ onSubmit }: AdmissionFormProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      registrationNumber: "",
-      studentName: "",
-      dateOfBirth: "",
-      parentName: "",
-      caste: "",
-      residentialType: "non-residential",
-      parentPhone: "",
-      address: "",
-      aadhaarNumber: "",
-      panCardNumber: "",
-    },
-  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<Omit<Student, "id">>();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setImageError(null);
     const file = e.target.files?.[0];
     
-    if (file) {
-      // Check file size (100KB limit = 100 * 1024 bytes)
-      if (file.size > 100 * 1024) {
-        setImageError("Image size must be less than 100KB");
-        e.target.value = '';
-        setImagePreview(null);
-        return;
-      }
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      
-      // Set the file in the form
-      form.setValue("studentImage", file);
-    } else {
-      setImagePreview(null);
+    if (!file) {
+      return;
     }
+    
+    if (file.size > 100 * 1024) { // 100KB limit
+      toast({
+        title: "Image too large",
+        description: "The image size exceeds the 100KB limit",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setImageFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+      setValue('imageUrl', reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
   
-  const removeImage = () => {
-    setImagePreview(null);
-    setImageError(null);
-    form.setValue("studentImage", null);
-  };
-
-  const onSubmit = (data: FormValues) => {
-    // Handle form submission
-    console.log("Form data:", data);
-    toast({
-      title: "Admission form submitted",
-      description: `Student ${data.studentName} registered successfully.`,
-    });
+  const onFormSubmit = (data: Omit<Student, "id">) => {
+    if (!imagePreview) {
+      toast({
+        title: "Missing student image",
+        description: "Please upload a student image (max 100KB)",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Reset form after submission
-    form.reset();
-    setImagePreview(null);
+    onSubmit({
+      ...data,
+      imageUrl: imagePreview,
+      // Set default values for fields not in the form
+      admissionDate: new Date().toISOString().split('T')[0],
+      medicalInfo: ""
+    });
   };
-
+  
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
         <CardTitle>Student Admission Form</CardTitle>
-        <CardDescription>
-          Register a new student in the system
-        </CardDescription>
+        <CardDescription>Enter student details for admission</CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="registrationNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Admission Registration Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., ADM2023001" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Student Full Name <span className="text-red-500">*</span></Label>
+              <Input 
+                id="fullName" 
+                {...register("fullName", { required: "Student name is required" })} 
+                placeholder="Enter student's full name"
               />
-              
-              <FormField
-                control={form.control}
-                name="studentName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Student Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="parentName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Parent/Guardian Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Parent's full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="caste"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Caste</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Caste (optional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="residentialType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Residential Type</FormLabel>
-                    <FormControl>
-                      <RadioGroup 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        className="flex space-x-4"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="residential" id="residential" />
-                          <Label htmlFor="residential">Residential</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="non-residential" id="non-residential" />
-                          <Label htmlFor="non-residential">Non-residential</Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="parentPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Parent Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 9876543210" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="aadhaarNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Aadhaar Card Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="12-digit Aadhaar number" maxLength={12} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="panCardNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PAN Card Number (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="PAN Card number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {errors.fullName && <p className="text-red-500 text-sm">{errors.fullName.message}</p>}
             </div>
-            
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Complete residential address" 
-                      className="min-h-[80px]" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             
             <div className="space-y-2">
-              <Label>Student Image</Label>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <Label htmlFor="studentImage" className="flex h-10 cursor-pointer items-center justify-center rounded-md border border-dashed px-4 transition hover:border-primary">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Image
-                    </Label>
-                    <Input 
-                      id="studentImage" 
-                      type="file" 
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={handleImageChange}
-                    />
-                  </div>
-                  <FormDescription>
-                    JPG, PNG or GIF. Max size 100KB.
-                  </FormDescription>
-                </div>
-                
-                {imageError && (
-                  <div className="text-sm text-destructive">{imageError}</div>
-                )}
-                
-                {imagePreview && (
-                  <div className="relative w-32 h-32">
-                    <img 
-                      src={imagePreview} 
-                      alt="Student Preview" 
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                    <Button 
-                      type="button"
-                      variant="destructive" 
-                      size="icon" 
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                      onClick={removeImage}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
+              <Input 
+                id="dateOfBirth" 
+                type="date" 
+                {...register("dateOfBirth", { required: "Date of birth is required" })}
+                max={format(new Date(), "yyyy-MM-dd")}
+              />
+              {errors.dateOfBirth && <p className="text-red-500 text-sm">{errors.dateOfBirth.message}</p>}
             </div>
             
-            <Button type="submit" className="w-full">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Register Student
-            </Button>
-          </form>
-        </Form>
+            <div className="space-y-2">
+              <Label htmlFor="parentName">Parent/Guardian Name <span className="text-red-500">*</span></Label>
+              <Input 
+                id="parentName" 
+                {...register("parentName", { required: "Parent name is required" })}
+                placeholder="Enter parent/guardian name"
+              />
+              {errors.parentName && <p className="text-red-500 text-sm">{errors.parentName.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="caste">Caste</Label>
+              <Input 
+                id="caste" 
+                {...register("caste")}
+                placeholder="Enter student's caste"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="residentialType">Residential Type <span className="text-red-500">*</span></Label>
+              <RadioGroup defaultValue="non-residential">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem 
+                    id="residential" 
+                    value="residential" 
+                    onClick={() => setValue("residentialType", "residential")}
+                  />
+                  <Label htmlFor="residential">Residential</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem 
+                    id="non-residential" 
+                    value="non-residential" 
+                    onClick={() => setValue("residentialType", "non-residential")}
+                  />
+                  <Label htmlFor="non-residential">Non-Residential</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="parentPhone">Parent Phone Number <span className="text-red-500">*</span></Label>
+              <Input 
+                id="parentPhone" 
+                {...register("parentPhone", { 
+                  required: "Phone number is required",
+                  pattern: {
+                    value: /^\+?[0-9\s-]{10,15}$/,
+                    message: "Please enter a valid phone number"
+                  } 
+                })}
+                placeholder="+91 XXXXXXXXXX"
+              />
+              {errors.parentPhone && <p className="text-red-500 text-sm">{errors.parentPhone.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="parentEmail">Parent Email</Label>
+              <Input 
+                id="parentEmail" 
+                type="email"
+                {...register("parentEmail", { 
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "Please enter a valid email address"
+                  }
+                })}
+                placeholder="parent@example.com"
+              />
+              {errors.parentEmail && <p className="text-red-500 text-sm">{errors.parentEmail.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="aadhaarNumber">Aadhaar Card Number</Label>
+              <Input 
+                id="aadhaarNumber" 
+                {...register("aadhaarNumber", {
+                  pattern: {
+                    value: /^\d{12}$/,
+                    message: "Aadhaar number must be 12 digits"
+                  }
+                })}
+                placeholder="XXXX XXXX XXXX"
+              />
+              {errors.aadhaarNumber && <p className="text-red-500 text-sm">{errors.aadhaarNumber.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="panCardNumber">PAN Card Number</Label>
+              <Input 
+                id="panCardNumber" 
+                {...register("panCardNumber", {
+                  pattern: {
+                    value: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
+                    message: "Please enter a valid PAN card number"
+                  }
+                })}
+                placeholder="ABCDE1234F"
+              />
+              {errors.panCardNumber && <p className="text-red-500 text-sm">{errors.panCardNumber.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="class">Class <span className="text-red-500">*</span></Label>
+              <Select 
+                onValueChange={(value) => setValue("class", value)}
+                defaultValue=""
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((classNum) => (
+                    <SelectItem key={classNum} value={String(classNum)}>
+                      Class {classNum}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.class && <p className="text-red-500 text-sm">{errors.class.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="section">Section <span className="text-red-500">*</span></Label>
+              <Select
+                onValueChange={(value) => setValue("section", value)}
+                defaultValue=""
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['A', 'B', 'C', 'D'].map((section) => (
+                    <SelectItem key={section} value={section}>
+                      Section {section}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.section && <p className="text-red-500 text-sm">{errors.section.message}</p>}
+            </div>
+            
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
+              <Textarea 
+                id="address" 
+                {...register("address", { required: "Address is required" })}
+                placeholder="Enter complete address"
+                className="min-h-[100px]"
+              />
+              {errors.address && <p className="text-red-500 text-sm">{errors.address.message}</p>}
+            </div>
+            
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="studentImage">Student Image (Max 100KB) <span className="text-red-500">*</span></Label>
+              <Input 
+                id="studentImage" 
+                type="file" 
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+              {imagePreview && (
+                <div className="mt-2 flex justify-center">
+                  <img 
+                    src={imagePreview} 
+                    alt="Student preview" 
+                    className="h-32 w-32 object-cover rounded-md border" 
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <Button type="submit">Submit Admission Form</Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );
-};
+}

@@ -1,4 +1,3 @@
-
 import { Student, Marks, Attendance, Fee } from "@/types/models";
 
 // Helper function to generate a random ID
@@ -204,29 +203,98 @@ export const generateMockData = () => {
 // Simulate data storage
 let mockData = generateMockData();
 
-// Data service
+// Data service with enhanced features for role sharing
 export const dataService = {
   // Students
   getStudents: () => mockData.students,
   getStudentById: (id: string) => mockData.students.find(s => s.id === id),
+  getResidentialStudents: () => mockData.students.filter(s => s.residentialType === "residential"),
+  getNonResidentialStudents: () => mockData.students.filter(s => s.residentialType === "non-residential"),
   addStudent: (student: Omit<Student, "id">) => {
     const newStudent = {
       ...student,
       id: `STU${(mockData.students.length + 1).toString().padStart(4, "0")}`,
+      admissionClass: student.class || "1", // Set admission class to current class if not provided
     };
     mockData.students.push(newStudent);
+    
+    // If this is a new student, automatically create fee records
+    const currentYear = new Date().getFullYear();
+    const academicYear = `${currentYear}-${currentYear + 1}`;
+    
+    const totalAmount = 59000;
+    const medicalAndStationaryPool = newStudent.residentialType === "residential" ? 9000 : 5000;
+    
+    const newFee = {
+      id: generateId(),
+      studentId: newStudent.id,
+      studentName: newStudent.fullName,
+      academicYear,
+      totalAmount,
+      medicalAndStationaryPool,
+      installments: [
+        {
+          id: generateId(),
+          dueDate: `${currentYear}-06-15`,
+          amount: (totalAmount - medicalAndStationaryPool) / 2,
+          status: "due" as const,
+        },
+        {
+          id: generateId(),
+          dueDate: `${currentYear}-11-15`,
+          amount: (totalAmount - medicalAndStationaryPool) / 2,
+          status: "due" as const,
+        },
+      ],
+      expenses: [],
+    };
+    
+    mockData.fees.push(newFee);
+    
     return newStudent;
   },
   updateStudent: (id: string, data: Partial<Student>) => {
     const index = mockData.students.findIndex(s => s.id === id);
     if (index !== -1) {
       mockData.students[index] = { ...mockData.students[index], ...data };
+      
+      // Update related records (fees, marks, attendance) if name changed
+      if (data.fullName) {
+        // Update fee records
+        mockData.fees.forEach(fee => {
+          if (fee.studentId === id) {
+            fee.studentName = data.fullName!;
+          }
+        });
+        
+        // Update marks records
+        mockData.marks.forEach(mark => {
+          if (mark.studentId === id) {
+            mark.studentName = data.fullName!;
+          }
+        });
+        
+        // Update attendance records
+        mockData.attendance.forEach(record => {
+          if (record.studentId === id) {
+            record.studentName = data.fullName!;
+          }
+        });
+      }
+      
       return mockData.students[index];
     }
     return null;
   },
   deleteStudent: (id: string) => {
+    // Delete student
     mockData.students = mockData.students.filter(s => s.id !== id);
+    
+    // Delete related records
+    mockData.fees = mockData.fees.filter(f => f.studentId !== id);
+    mockData.marks = mockData.marks.filter(m => m.studentId !== id);
+    mockData.attendance = mockData.attendance.filter(a => a.studentId !== id);
+    
     return true;
   },
   
@@ -264,9 +332,29 @@ export const dataService = {
     return null;
   },
   
-  // Fees
+  // Fees with enhanced role access
   getFees: () => mockData.fees,
+  getResidentialFees: () => {
+    const residentialStudentIds = mockData.students
+      .filter(s => s.residentialType === "residential")
+      .map(s => s.id);
+    
+    return mockData.fees.filter(fee => 
+      residentialStudentIds.includes(fee.studentId)
+    );
+  },
+  getNonResidentialFees: () => {
+    const nonResidentialStudentIds = mockData.students
+      .filter(s => s.residentialType === "non-residential" || !s.residentialType)
+      .map(s => s.id);
+    
+    return mockData.fees.filter(fee => 
+      nonResidentialStudentIds.includes(fee.studentId)
+    );
+  },
   getFeeByStudentId: (studentId: string) => mockData.fees.find(f => f.studentId === studentId),
+  
+  // Fees with enhanced role access
   addFee: (fee: Omit<Fee, "id">) => {
     const newFee = { ...fee, id: generateId() };
     mockData.fees.push(newFee);
@@ -303,4 +391,157 @@ export const dataService = {
     }
     return null;
   },
+  
+  // Student promotion
+  promoteStudent: (studentId: string, newClass: string, newSection: string) => {
+    const index = mockData.students.findIndex(s => s.id === studentId);
+    if (index !== -1) {
+      const student = mockData.students[index];
+      
+      // Archive current academic year data before promotion
+      const academicHistory = student.academicHistory || [];
+      const currentYear = new Date().getFullYear();
+      const currentAcademicYear = `${currentYear-1}-${currentYear}`;
+      
+      // Get marks, attendance and fees for current academic year
+      const studentMarks = mockData.marks.filter(m => 
+        m.studentId === studentId && m.academicYear === currentAcademicYear
+      );
+      
+      const studentAttendance = mockData.attendance.filter(a => 
+        a.studentId === studentId
+      );
+      
+      // Group attendance by month
+      const attendanceByMonth: {[key: string]: AttendanceRecord} = {};
+      studentAttendance.forEach(record => {
+        const date = new Date(record.date);
+        const month = date.getMonth();
+        const year = date.getFullYear();
+        const key = `${year}-${month}`;
+        
+        if (!attendanceByMonth[key]) {
+          attendanceByMonth[key] = {
+            month: (month + 1).toString(),
+            year: year.toString(),
+            daysPresent: 0,
+            daysAbsent: 0,
+            daysLate: 0,
+            totalDays: 0
+          };
+        }
+        
+        attendanceByMonth[key].totalDays++;
+        if (record.status === "present") attendanceByMonth[key].daysPresent++;
+        if (record.status === "absent") attendanceByMonth[key].daysAbsent++;
+        if (record.status === "late") attendanceByMonth[key].daysLate++;
+      });
+      
+      const studentFees = mockData.fees.find(f => 
+        f.studentId === studentId && f.academicYear === currentAcademicYear
+      );
+      
+      // Create academic record for the current year
+      const academicRecord: AcademicRecord = {
+        id: generateId(),
+        studentId,
+        academicYear: currentAcademicYear,
+        class: student.class,
+        section: student.section,
+        marks: studentMarks,
+        attendance: Object.values(attendanceByMonth),
+        fees: studentFees ? {
+          academicYear: studentFees.academicYear,
+          totalFee: studentFees.totalAmount,
+          medicalStationaryPool: studentFees.medicalAndStationaryPool,
+          paidAmount: studentFees.installments
+            .filter(i => i.status === "paid")
+            .reduce((sum, i) => sum + i.amount, 0),
+          dueAmount: studentFees.installments
+            .filter(i => i.status !== "paid")
+            .reduce((sum, i) => sum + i.amount, 0),
+          installments: studentFees.installments
+        } : {
+          academicYear: currentAcademicYear,
+          totalFee: 0,
+          medicalStationaryPool: 0,
+          paidAmount: 0,
+          dueAmount: 0,
+          installments: []
+        }
+      };
+      
+      academicHistory.push(academicRecord);
+      
+      // Update student record with promotion
+      mockData.students[index] = {
+        ...student,
+        class: newClass,
+        section: newSection,
+        academicHistory
+      };
+      
+      // Create new fee record for the next academic year
+      const nextAcademicYear = `${currentYear}-${currentYear+1}`;
+      const totalAmount = 59000;
+      const medicalAndStationaryPool = student.residentialType === "residential" ? 9000 : 5000;
+      
+      const newFee = {
+        id: generateId(),
+        studentId,
+        studentName: student.fullName,
+        academicYear: nextAcademicYear,
+        totalAmount,
+        medicalAndStationaryPool,
+        installments: [
+          {
+            id: generateId(),
+            dueDate: `${currentYear}-06-15`,
+            amount: (totalAmount - medicalAndStationaryPool) / 2,
+            status: "due" as const,
+          },
+          {
+            id: generateId(),
+            dueDate: `${currentYear}-11-15`,
+            amount: (totalAmount - medicalAndStationaryPool) / 2,
+            status: "due" as const,
+          },
+        ],
+        expenses: [],
+      };
+      
+      mockData.fees.push(newFee);
+      
+      return mockData.students[index];
+    }
+    return null;
+  },
+  
+  // Library functionality
+  getBooks: () => [
+    { id: "BOOK001", title: "Mathematics Fundamentals", author: "Sharma, R.D.", subject: "Mathematics", availability: 5 },
+    { id: "BOOK002", title: "English Grammar", author: "Wren & Martin", subject: "English", availability: 3 },
+    { id: "BOOK003", title: "Science for Grade 8", author: "NCERT", subject: "Science", availability: 7 },
+    { id: "BOOK004", title: "History of India", author: "Thapar, Romila", subject: "History", availability: 2 },
+    { id: "BOOK005", title: "Computer Science Basics", author: "Kanetkar, Y.P.", subject: "Computer Science", availability: 4 },
+  ],
+  
+  getBookIssues: () => [
+    { id: "ISSUE001", bookId: "BOOK001", bookTitle: "Mathematics Fundamentals", studentId: "STU0001", studentName: "Student 1", issueDate: "2023-05-10", dueDate: "2023-06-10", returnDate: "2023-06-05", status: "returned" },
+    { id: "ISSUE002", bookId: "BOOK002", bookTitle: "English Grammar", studentId: "STU0002", studentName: "Student 2", issueDate: "2023-05-15", dueDate: "2023-06-15", status: "issued" },
+    { id: "ISSUE003", bookId: "BOOK003", bookTitle: "Science for Grade 8", studentId: "STU0003", studentName: "Student 3", issueDate: "2023-06-01", dueDate: "2023-07-01", status: "issued" }
+  ],
+  
+  // Stationary functionality
+  getStationaryExpenses: () => [
+    { id: "EXP001", studentId: "STU0001", studentName: "Student 1", date: "2023-04-15", amount: 1200, description: "Notebooks and textbooks", academic_year: "2023-2024" },
+    { id: "EXP002", studentId: "STU0002", studentName: "Student 2", date: "2023-04-18", amount: 950, description: "Stationery items and uniform", academic_year: "2023-2024" },
+    { id: "EXP003", studentId: "STU0003", studentName: "Student 3", date: "2023-05-02", amount: 1500, description: "Science lab equipment", academic_year: "2023-2024" }
+  ],
+  
+  // Student promotion module
+  getPromotionHistory: () => [
+    { id: "PROM001", studentId: "STU0001", studentName: "Student 1", fromClass: "5", toClass: "6", fromSection: "A", toSection: "B", promotionDate: "2023-04-01", academicYear: "2023-2024" },
+    { id: "PROM002", studentId: "STU0002", studentName: "Student 2", fromClass: "8", toClass: "9", fromSection: "C", toSection: "A", promotionDate: "2023-04-01", academicYear: "2023-2024" }
+  ],
 };

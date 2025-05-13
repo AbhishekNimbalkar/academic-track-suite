@@ -1,4 +1,3 @@
-
 export interface Student {
   id: string;
   fullName: string;
@@ -149,4 +148,49 @@ export interface Notification {
   sentVia: ("email" | "sms" | "app")[];
   dateSent: string;
   status: "sent" | "delivered" | "read" | "failed";
+}
+
+// Add additional model types for library management
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  subject: string;
+  availability: number;
+}
+
+export interface BookIssue {
+  id: string;
+  bookId: string;
+  bookTitle: string;
+  studentId: string;
+  studentName: string;
+  issueDate: string;
+  dueDate: string;
+  returnDate?: string;
+  status: "issued" | "returned" | "overdue";
+}
+
+// Add types for expenses
+export interface StationaryExpense {
+  id: string;
+  studentId: string;
+  studentName: string;
+  date: string;
+  amount: number;
+  description: string;
+  academic_year: string;
+}
+
+// Add types for student promotion
+export interface PromotionRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  fromClass: string;
+  toClass: string;
+  fromSection: string;
+  toSection: string;
+  promotionDate: string;
+  academicYear: string;
 }

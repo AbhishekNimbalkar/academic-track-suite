@@ -29,6 +29,7 @@ import Applications from "./pages/Applications";
 import Library from "./pages/Library";
 import Stationary from "./pages/Stationary";
 import StudentAdmission from "./pages/StudentAdmission";
+import StudentPromotion from "./pages/StudentPromotion";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/admissions" element={<Admissions />} />
             <Route path="/student-admission" element={<StudentAdmission />} />
+            <Route path="/student-promotion" element={<StudentPromotion />} />
             <Route path="/my-classes" element={<MyClasses />} />
             <Route path="/residential-fees" element={<ResidentialFees />} />
             <Route path="/non-residential-fees" element={<NonResidentialFees />} />

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { dataService } from "@/services/mockData";
 import { Student } from "@/types/models";
@@ -16,11 +16,15 @@ import { StudentList } from "@/components/students/StudentList";
 import { AddStudentDialog } from "@/components/students/AddStudentDialog";
 import { DeleteStudentDialog } from "@/components/students/DeleteStudentDialog";
 import { SearchBar } from "@/components/students/SearchBar";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const Students: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const isAdmin = user?.role === "admin";
-  const [students, setStudents] = useState<Student[]>(dataService.getStudents());
+  const canAddStudents = hasPermission("manage_students") || hasPermission("create_student_applications");
+  const [students, setStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -39,6 +43,17 @@ const Students: React.FC = () => {
     medicalInfo: "",
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Fetch students when component mounts
+  useEffect(() => {
+    const fetchStudents = () => {
+      const allStudents = dataService.getStudents();
+      setStudents(allStudents);
+    };
+
+    fetchStudents();
+  }, []);
 
   const filteredStudents = students.filter((student) =>
     student.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -85,19 +100,20 @@ const Students: React.FC = () => {
     }
   };
 
+  const handleAddStudentClick = () => {
+    navigate("/student-admission");
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold tracking-tight">Students</h1>
-          {isAdmin && (
-            <AddStudentDialog
-              isOpen={isAddDialogOpen}
-              onOpenChange={setIsAddDialogOpen}
-              newStudent={newStudent}
-              onStudentChange={setNewStudent}
-              onAddStudent={handleAddStudent}
-            />
+          {canAddStudents && (
+            <Button onClick={handleAddStudentClick}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Student
+            </Button>
           )}
         </div>
 
@@ -119,8 +135,16 @@ const Students: React.FC = () => {
             <StudentList 
               students={filteredStudents} 
               onDeleteClick={(student) => {
-                setStudentToDelete(student);
-                setIsDeleteDialogOpen(true);
+                if (isAdmin) {
+                  setStudentToDelete(student);
+                  setIsDeleteDialogOpen(true);
+                } else {
+                  toast({
+                    title: "Permission Denied",
+                    description: "Only administrators can delete student records.",
+                    variant: "destructive",
+                  });
+                }
               }}
             />
           </CardContent>
