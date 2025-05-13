@@ -4,7 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { AdmissionForm } from "@/components/admission/AdmissionForm";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { dataService } from "@/services/mockData";
 import { Student } from "@/types/models";
