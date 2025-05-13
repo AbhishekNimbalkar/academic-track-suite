@@ -1,4 +1,4 @@
-import { Student, Marks, Attendance, Fee } from "@/types/models";
+import { Student, Marks, Attendance, Fee, AttendanceRecord, AcademicRecord, FeeRecord, BookIssue } from "@/types/models";
 
 // Helper function to generate a random ID
 const generateId = () => Math.random().toString(36).substring(2, 10);
@@ -7,10 +7,12 @@ const generateId = () => Math.random().toString(36).substring(2, 10);
 export const generateMockStudents = (count: number): Student[] => {
   const classes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
   const sections = ["A", "B", "C"];
+  const residentialTypes: ("residential" | "non-residential")[] = ["residential", "non-residential"];
   
   return Array.from({ length: count }).map((_, index) => {
     const studentClass = classes[Math.floor(Math.random() * classes.length)];
     const studentSection = sections[Math.floor(Math.random() * sections.length)];
+    const residentialType = residentialTypes[Math.floor(Math.random() * residentialTypes.length)];
     
     return {
       id: `STU${(index + 1).toString().padStart(4, "0")}`,
@@ -33,6 +35,10 @@ export const generateMockStudents = (count: number): Student[] => {
       parentPhone: `+91${Math.floor(Math.random() * 10000000000).toString().padStart(10, "0")}`,
       address: `Address of Student ${index + 1}`,
       medicalInfo: Math.random() > 0.7 ? "No medical issues" : "Allergic to peanuts",
+      residentialType: residentialType,
+      caste: Math.random() > 0.5 ? "General" : "OBC",
+      aadhaarNumber: `${Math.floor(Math.random() * 10000000000).toString().padStart(12, "0")}`,
+      panCardNumber: `ABCDE${Math.floor(Math.random() * 10000)}F`,
     };
   });
 };
@@ -527,10 +533,10 @@ export const dataService = {
   ],
   
   getBookIssues: () => [
-    { id: "ISSUE001", bookId: "BOOK001", bookTitle: "Mathematics Fundamentals", studentId: "STU0001", studentName: "Student 1", issueDate: "2023-05-10", dueDate: "2023-06-10", returnDate: "2023-06-05", status: "returned" },
-    { id: "ISSUE002", bookId: "BOOK002", bookTitle: "English Grammar", studentId: "STU0002", studentName: "Student 2", issueDate: "2023-05-15", dueDate: "2023-06-15", status: "issued" },
-    { id: "ISSUE003", bookId: "BOOK003", bookTitle: "Science for Grade 8", studentId: "STU0003", studentName: "Student 3", issueDate: "2023-06-01", dueDate: "2023-07-01", status: "issued" }
-  ],
+    { id: "ISSUE001", bookId: "BOOK001", bookTitle: "Mathematics Fundamentals", studentId: "STU0001", studentName: "Student 1", issueDate: "2023-05-10", dueDate: "2023-06-10", returnDate: "2023-06-05", status: "returned" as const },
+    { id: "ISSUE002", bookId: "BOOK002", bookTitle: "English Grammar", studentId: "STU0002", studentName: "Student 2", issueDate: "2023-05-15", dueDate: "2023-06-15", status: "issued" as const },
+    { id: "ISSUE003", bookId: "BOOK003", bookTitle: "Science for Grade 8", studentId: "STU0003", studentName: "Student 3", issueDate: "2023-06-01", dueDate: "2023-07-01", status: "issued" as const }
+  ] as BookIssue[],
   
   // Stationary functionality
   getStationaryExpenses: () => [
