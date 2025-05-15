@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Trash, Eye } from "lucide-react";
+import { Pencil, Trash, Eye } from "lucide-react";
 import { Student } from "@/types/models";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,10 +30,12 @@ import {
 interface StudentListProps {
   students: Student[];
   onDeleteClick: (student: Student) => void;
+  onEditClick?: (student: Student) => void;
 }
 
-export function StudentList({ students, onDeleteClick }: StudentListProps) {
-  const { hasPermission } = useAuth();
+export function StudentList({ students, onDeleteClick, onEditClick }: StudentListProps) {
+  const { hasPermission, user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   
   if (students.length === 0) {
@@ -85,6 +87,24 @@ export function StudentList({ students, onDeleteClick }: StudentListProps) {
                       <TooltipContent>View details</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
+                  
+                  {isAdmin && onEditClick && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="text-blue-500 hover:text-blue-600"
+                            onClick={() => onEditClick(student)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   
                   {hasPermission("manage_students") && (
                     <TooltipProvider>

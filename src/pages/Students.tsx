@@ -11,10 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { StudentList } from "@/components/students/StudentList";
 import { AddStudentDialog } from "@/components/students/AddStudentDialog";
 import { DeleteStudentDialog } from "@/components/students/DeleteStudentDialog";
+import { EditStudentDialog } from "@/components/students/EditStudentDialog";
 import { SearchBar } from "@/components/students/SearchBar";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,9 @@ const Students: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
   const [newStudent, setNewStudent] = useState<Omit<Student, "id">>({
     fullName: "",
     dateOfBirth: "",
@@ -100,6 +103,22 @@ const Students: React.FC = () => {
     }
   };
 
+  const handleEditStudent = (updatedStudentData: Partial<Student>) => {
+    if (studentToEdit) {
+      const updatedStudent = dataService.updateStudent(studentToEdit.id, updatedStudentData);
+      
+      if (updatedStudent) {
+        // Update the local state
+        setStudents(students.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+        
+        toast({
+          title: "Student Updated",
+          description: `${updatedStudent.fullName}'s information has been updated.`,
+        });
+      }
+    }
+  };
+
   const handleAddStudentClick = () => {
     navigate("/student-admission");
   };
@@ -146,6 +165,12 @@ const Students: React.FC = () => {
                   });
                 }
               }}
+              onEditClick={(student) => {
+                if (isAdmin) {
+                  setStudentToEdit(student);
+                  setIsEditDialogOpen(true);
+                }
+              }}
             />
           </CardContent>
         </Card>
@@ -156,6 +181,13 @@ const Students: React.FC = () => {
         onOpenChange={setIsDeleteDialogOpen}
         student={studentToDelete}
         onDeleteStudent={handleDeleteStudent}
+      />
+
+      <EditStudentDialog 
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        student={studentToEdit}
+        onUpdateStudent={handleEditStudent}
       />
     </MainLayout>
   );
