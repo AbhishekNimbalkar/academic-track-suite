@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
-  const { user, logout, hasPermission } = useAuth();
+  const { user, userRole, logout, hasPermission } = useAuth();
 
   const adminMenuItems = [
     { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
@@ -29,7 +29,7 @@ export const Sidebar: React.FC = () => {
     { label: "Settings", path: "/settings", icon: <Settings size={18} /> },
   ];
 
-  const classTeacherMenuItems = [
+  const teacherMenuItems = [
     { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
     { label: "My Classes", path: "/my-classes", icon: <GraduationCap size={18} /> },
     { label: "Students", path: "/students", icon: <Users size={18} /> },
@@ -39,41 +39,13 @@ export const Sidebar: React.FC = () => {
     { label: "Applications", path: "/applications", icon: <FileText size={18} /> },
   ];
 
-  const accountantMenuItems = [
-    { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
-    { label: "Fee Collection", path: "/fees", icon: <DollarSign size={18} /> },
-    { label: "Residential", path: "/residential-fees", icon: <Receipt size={18} /> },
-    { label: "Non-Residential", path: "/non-residential-fees", icon: <Receipt size={18} /> },
-  ];
-
-  const stationaryHeadMenuItems = [
-    { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
-    { label: "Expenses", path: "/expenses", icon: <PiggyBank size={18} /> },
-    { label: "Residential Students", path: "/residential-students", icon: <Users size={18} /> },
-  ];
-
-  const libraryHeadMenuItems = [
-    { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
-    { label: "Books", path: "/books", icon: <Book size={18} /> },
-    { label: "Book Issues", path: "/book-issues", icon: <FileText size={18} /> },
-  ];
-
   let menuItems;
-  switch (user?.role) {
+  switch (userRole) {
     case "admin":
       menuItems = adminMenuItems;
       break;
-    case "class_teacher":
-      menuItems = classTeacherMenuItems;
-      break;
-    case "accountant":
-      menuItems = accountantMenuItems;
-      break;
-    case "stationary_head":
-      menuItems = stationaryHeadMenuItems;
-      break;
-    case "library_head":
-      menuItems = libraryHeadMenuItems;
+    case "teacher":
+      menuItems = teacherMenuItems;
       break;
     default:
       menuItems = [];
@@ -83,16 +55,18 @@ export const Sidebar: React.FC = () => {
     switch (role) {
       case "admin":
         return "Administrator";
-      case "class_teacher":
-        return "Class Teacher";
-      case "accountant":
-        return "Accountant";
-      case "stationary_head":
-        return "Stationary Head";
-      case "library_head":
-        return "Library Head";
+      case "teacher":
+        return "Teacher";
       default:
-        return role.charAt(0).toUpperCase() + role.slice(1);
+        return role?.charAt(0).toUpperCase() + role?.slice(1) || "";
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -110,12 +84,12 @@ export const Sidebar: React.FC = () => {
       <div className="p-4">
         <div className="flex items-center space-x-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
-            {user?.name.charAt(0)}
+            {user?.email?.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="font-medium text-sm">{user?.name}</p>
+            <p className="font-medium text-sm">{user?.email}</p>
             <p className="text-xs text-muted-foreground">
-              {user ? getRoleTitle(user.role) : ""}
+              {userRole ? getRoleTitle(userRole) : ""}
             </p>
           </div>
         </div>
@@ -144,7 +118,7 @@ export const Sidebar: React.FC = () => {
         <Button
           variant="outline"
           className="w-full justify-start text-sm"
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut size={18} className="mr-2" />
           Logout

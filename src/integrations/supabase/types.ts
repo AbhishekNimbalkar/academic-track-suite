@@ -193,6 +193,75 @@ export type Database = {
         }
         Relationships: []
       }
+      teachers: {
+        Row: {
+          address: string | null
+          classes: string[] | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          joining_date: string
+          last_name: string
+          phone: string | null
+          qualification: string | null
+          subjects: string[] | null
+          teacher_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          classes?: string[] | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          joining_date: string
+          last_name: string
+          phone?: string | null
+          qualification?: string | null
+          subjects?: string[] | null
+          teacher_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          classes?: string[] | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          joining_date?: string
+          last_name?: string
+          phone?: string | null
+          qualification?: string | null
+          subjects?: string[] | null
+          teacher_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

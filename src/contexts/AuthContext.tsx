@@ -1,152 +1,157 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { AuthState, User, ROLE_PERMISSIONS } from "@/types/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from '@supabase/supabase-js';
 
-interface AuthContextType extends AuthState {
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  userRole: string | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
 }
 
-const defaultState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration with updated roles
-const MOCK_USERS = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "admin@school.com",
-    password: "password123",
-    role: "admin" as const,
-    permissions: ROLE_PERMISSIONS.admin,
-  },
-  {
-    id: "2",
-    name: "Class Teacher",
-    email: "teacher@school.com",
-    password: "password123",
-    role: "class_teacher" as const,
-    permissions: ROLE_PERMISSIONS.class_teacher,
-    assignedClasses: ["9", "10"],
-    subjects: ["Mathematics", "Physics"],
-  },
-  {
-    id: "3",
-    name: "Accountant",
-    email: "accountant@school.com",
-    password: "password123",
-    role: "accountant" as const,
-    permissions: ROLE_PERMISSIONS.accountant,
-  },
-  {
-    id: "4",
-    name: "Stationary Head",
-    email: "stationary@school.com",
-    password: "password123",
-    role: "stationary_head" as const,
-    permissions: ROLE_PERMISSIONS.stationary_head,
-  },
-  {
-    id: "5",
-    name: "Library Head",
-    email: "library@school.com",
-    password: "password123",
-    role: "library_head" as const,
-    permissions: ROLE_PERMISSIONS.library_head,
-  },
-];
+// Role-based permissions
+const ROLE_PERMISSIONS = {
+  admin: [
+    "manage_teachers",
+    "manage_students", 
+    "manage_fees",
+    "manage_expenses",
+    "manage_library",
+    "generate_certificates",
+    "view_all_records",
+    "manage_stationary",
+    "manage_admissions",
+    "promote_students",
+  ],
+  teacher: [
+    "manage_marks",
+    "manage_attendance", 
+    "generate_marksheets",
+    "create_student_applications",
+    "view_students",
+    "manage_admissions",
+  ],
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
-  const [state, setState] = useState<AuthState>(defaultState);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check local storage for saved user session
-    const savedUser = localStorage.getItem("sms_user");
-    
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser) as User;
-        setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      } catch (error) {
-        console.error("Failed to parse saved user:", error);
-        localStorage.removeItem("sms_user");
-        setState({ ...defaultState, isLoading: false });
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Fetch user role
+          setTimeout(async () => {
+            try {
+              const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              
+              setUserRole(profile?.role || null);
+            } catch (error) {
+              console.error('Error fetching user role:', error);
+            }
+          }, 0);
+        } else {
+          setUserRole(null);
+        }
+        
+        setIsLoading(false);
       }
-    } else {
-      setState({ ...defaultState, isLoading: false });
-    }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Simulate API request
-    const user = MOCK_USERS.find(
-      (u) => u.email === email && u.password === password
-    );
-    
-    if (user) {
-      const { password, ...userWithoutPassword } = user;
-      localStorage.setItem("sms_user", JSON.stringify(userWithoutPassword));
-      
-      setState({
-        user: userWithoutPassword,
-        isAuthenticated: true,
-        isLoading: false,
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
+      
+      if (error) throw error;
       
       toast({
         title: "Welcome back!",
-        description: `Logged in as ${userWithoutPassword.name}`,
+        description: "You have been logged in successfully.",
       });
-    } else {
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: error.message,
         variant: "destructive",
       });
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       
-      throw new Error("Invalid credentials");
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("sms_user");
-    setState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
-    });
-  };
-
-  // Add a helper function to check if the user has a specific permission
   const hasPermission = (permission: string): boolean => {
-    if (!state.user || !state.user.permissions) {
-      return false;
-    }
-    return state.user.permissions.includes(permission);
+    if (!userRole) return false;
+    const rolePermissions = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS];
+    return rolePermissions?.includes(permission) || false;
   };
+
+  const isAuthenticated = !!session;
 
   return (
     <AuthContext.Provider
       value={{
-        ...state,
+        user,
+        session,
+        isAuthenticated,
+        isLoading,
+        userRole,
         login,
         logout,
         hasPermission,
