@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { dataService } from "@/services/mockData";
 import { Student } from "@/types/models";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -20,6 +19,7 @@ import { SearchBar } from "@/components/students/SearchBar";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Students: React.FC = () => {
   const { user, hasPermission } = useAuth();
@@ -48,13 +48,51 @@ const Students: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Fetch students when component mounts
-  useEffect(() => {
-    const fetchStudents = () => {
-      const allStudents = dataService.getStudents();
-      setStudents(allStudents);
-    };
+  // Fetch students from Supabase
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching students:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch students",
+          variant: "destructive",
+        });
+        return;
+      }
 
+      // Convert Supabase data to Student format
+      const formattedStudents: Student[] = data.map(student => ({
+        id: student.student_id,
+        fullName: `${student.first_name} ${student.last_name}`,
+        dateOfBirth: student.date_of_birth,
+        class: student.current_class,
+        section: "A", // Default section since it's not in Supabase schema
+        admissionDate: student.admission_date,
+        admissionClass: student.current_class,
+        parentName: student.parent_name,
+        parentEmail: student.parent_email,
+        parentPhone: student.parent_phone,
+        address: "", // Not in Supabase schema
+        medicalInfo: student.medical_details || "",
+      }));
+
+      setStudents(formattedStudents);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch students",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
     fetchStudents();
   }, []);
 
@@ -66,57 +104,57 @@ const Students: React.FC = () => {
   );
 
   const handleAddStudent = () => {
-    const addedStudent = dataService.addStudent(newStudent);
-    setStudents([...students, addedStudent]);
-    setIsAddDialogOpen(false);
+    // This will be updated to work with Supabase in a future update
     toast({
-      title: "Student Added",
-      description: `${addedStudent.fullName} has been successfully added.`,
-    });
-    
-    // Reset form
-    setNewStudent({
-      fullName: "",
-      dateOfBirth: "",
-      class: "",
-      section: "",
-      admissionDate: new Date().toISOString().split("T")[0],
-      admissionClass: "",
-      parentName: "",
-      parentEmail: "",
-      parentPhone: "",
-      address: "",
-      medicalInfo: "",
+      title: "Feature Coming Soon",
+      description: "Adding students via Supabase will be implemented soon.",
     });
   };
 
-  const handleDeleteStudent = () => {
-    if (studentToDelete) {
-      dataService.deleteStudent(studentToDelete.id);
+  const handleDeleteStudent = async () => {
+    if (!studentToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('student_id', studentToDelete.id);
+
+      if (error) {
+        console.error('Error deleting student:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete student",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Remove from local state
       setStudents(students.filter((s) => s.id !== studentToDelete.id));
       setIsDeleteDialogOpen(false);
       setStudentToDelete(null);
+      
       toast({
         title: "Student Deleted",
         description: "The student has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete student",
+        variant: "destructive",
       });
     }
   };
 
   const handleEditStudent = (updatedStudentData: Partial<Student>) => {
-    if (studentToEdit) {
-      const updatedStudent = dataService.updateStudent(studentToEdit.id, updatedStudentData);
-      
-      if (updatedStudent) {
-        // Update the local state
-        setStudents(students.map(s => s.id === updatedStudent.id ? updatedStudent : s));
-        
-        toast({
-          title: "Student Updated",
-          description: `${updatedStudent.fullName}'s information has been updated.`,
-        });
-      }
-    }
+    // This will be updated to work with Supabase in a future update
+    toast({
+      title: "Feature Coming Soon",
+      description: "Editing students via Supabase will be implemented soon.",
+    });
   };
 
   const handleAddStudentClick = () => {
