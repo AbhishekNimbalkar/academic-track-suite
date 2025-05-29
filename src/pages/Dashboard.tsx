@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,10 +21,21 @@ import {
 } from "recharts";
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const students = dataService.getStudents();
   const attendance = dataService.getAttendance();
   const fees = dataService.getFees();
+
+  const getRoleTitle = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "Administrator";
+      case "teacher":
+        return "Teacher";
+      default:
+        return role?.charAt(0).toUpperCase() + role?.slice(1) || "";
+    }
+  };
 
   // Calculate dashboard stats
   const totalStudents = students.length;
@@ -86,7 +96,7 @@ const Dashboard: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back, {user?.name}
+          Welcome back, {userRole ? getRoleTitle(userRole) : user?.email}
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

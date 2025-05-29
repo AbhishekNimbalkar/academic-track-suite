@@ -11,7 +11,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Menu, School } from "lucide-react";
 
 export const MobileNavbar: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
+
+  const getRoleTitle = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "Administrator";
+      case "teacher":
+        return "Teacher";
+      default:
+        return role?.charAt(0).toUpperCase() + role?.slice(1) || "";
+    }
+  };
 
   return (
     <div className="md:hidden flex items-center justify-between p-4 border-b">
@@ -22,8 +33,10 @@ export const MobileNavbar: React.FC = () => {
       
       <div className="flex items-center space-x-4">
         <div className="text-sm text-right">
-          <p className="font-medium">{user?.name}</p>
-          <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+          <p className="font-medium">{user?.email}</p>
+          <p className="text-xs text-muted-foreground">
+            {userRole ? getRoleTitle(userRole) : ""}
+          </p>
         </div>
         
         <Sheet>
