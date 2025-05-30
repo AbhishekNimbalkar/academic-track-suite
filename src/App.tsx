@@ -9,8 +9,6 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 // Import all pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import CreateAdmin from "./pages/CreateAdmin";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
@@ -100,22 +98,6 @@ function App() {
                 element={
                   <PublicRoute>
                     <Login />
-                  </PublicRoute>
-                } 
-              />
-              <Route 
-                path="/signup" 
-                element={
-                  <PublicRoute>
-                    <Signup />
-                  </PublicRoute>
-                } 
-              />
-              <Route 
-                path="/create-admin" 
-                element={
-                  <PublicRoute>
-                    <CreateAdmin />
                   </PublicRoute>
                 } 
               />

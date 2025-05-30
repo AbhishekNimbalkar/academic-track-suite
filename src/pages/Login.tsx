@@ -27,7 +27,7 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      // Navigation is handled in the login function
+      navigate("/dashboard");
     } catch (error) {
       // Error handling is done in the AuthContext
     } finally {
@@ -39,6 +39,12 @@ const Login: React.FC = () => {
   const handleAdminLogin = () => {
     setEmail("admin@school.com");
     setPassword("admin123");
+  };
+
+  // Quick teacher login for testing
+  const handleTeacherLogin = () => {
+    setEmail("teacher@school.com");
+    setPassword("teacher123");
   };
 
   return (
@@ -102,28 +108,26 @@ const Login: React.FC = () => {
                 >
                   Fill Admin Credentials
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  Admin: admin@school.com / admin123
-                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleTeacherLogin}
+                >
+                  Fill Teacher Credentials
+                </Button>
+                <div className="text-xs text-center text-muted-foreground space-y-1">
+                  <p>Admin: admin@school.com / admin123</p>
+                  <p>Teacher: teacher@school.com / teacher123</p>
+                </div>
               </div>
-
-              <p className="text-sm text-center text-muted-foreground">
-                Need an account?{" "}
-                <Link to="/signup" className="text-primary hover:underline">
-                  Sign up
-                </Link>
-                {" | "}
-                <Link to="/create-admin" className="text-primary hover:underline">
-                  Create Admin
-                </Link>
-              </p>
             </CardFooter>
           </form>
         </Card>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Contact your administrator for login credentials or create an admin account.
+            Use the demo credentials above to access the system.
           </p>
         </div>
       </div>
