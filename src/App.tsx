@@ -4,73 +4,276 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
+// Import all pages
+import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import CreateAdmin from "./pages/CreateAdmin";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
+import Teachers from "./pages/Teachers";
 import Academics from "./pages/Academics";
 import Attendance from "./pages/Attendance";
 import Fees from "./pages/Fees";
-import Teachers from "./pages/Teachers";
-import Documents from "./pages/Documents";
-import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
-import Admissions from "./pages/Admissions";
-import MyClasses from "./pages/MyClasses";
-import NotFound from "./pages/NotFound";
-import ResidentialFees from "./pages/ResidentialFees";
-import NonResidentialFees from "./pages/NonResidentialFees";
-import Expenses from "./pages/Expenses";
-import ResidentialStudents from "./pages/ResidentialStudents";
+import StudentAdmission from "./pages/StudentAdmission";
+import Notifications from "./pages/Notifications";
+import Documents from "./pages/Documents";
+import Library from "./pages/Library";
 import Books from "./pages/Books";
 import BookIssues from "./pages/BookIssues";
-import Applications from "./pages/Applications";
-import Library from "./pages/Library";
 import Stationary from "./pages/Stationary";
-import StudentAdmission from "./pages/StudentAdmission";
+import Expenses from "./pages/Expenses";
 import StudentPromotion from "./pages/StudentPromotion";
+import MyClasses from "./pages/MyClasses";
+import Applications from "./pages/Applications";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Public Route Component (redirects to dashboard if already authenticated)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/students" element={<Students />} />
-            <Route path="/teachers" element={<Teachers />} />
-            <Route path="/academics" element={<Academics />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/fees" element={<Fees />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/admissions" element={<Admissions />} />
-            <Route path="/student-admission" element={<StudentAdmission />} />
-            <Route path="/student-promotion" element={<StudentPromotion />} />
-            <Route path="/my-classes" element={<MyClasses />} />
-            <Route path="/residential-fees" element={<ResidentialFees />} />
-            <Route path="/non-residential-fees" element={<NonResidentialFees />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/residential-students" element={<ResidentialStudents />} />
-            <Route path="/books" element={<Books />} />
-            <Route path="/book-issues" element={<BookIssues />} />
-            <Route path="/applications" element={<Applications />} />
-            <Route path="/library" element={<Library />} />
-            <Route path="/stationary" element={<Stationary />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              {/* Public routes */}
+              <Route 
+                path="/" 
+                element={
+                  <PublicRoute>
+                    <Index />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/login" 
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/signup" 
+                element={
+                  <PublicRoute>
+                    <Signup />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/create-admin" 
+                element={
+                  <PublicRoute>
+                    <CreateAdmin />
+                  </PublicRoute>
+                } 
+              />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/students" 
+                element={
+                  <ProtectedRoute>
+                    <Students />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/teachers" 
+                element={
+                  <ProtectedRoute>
+                    <Teachers />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/academics" 
+                element={
+                  <ProtectedRoute>
+                    <Academics />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/attendance" 
+                element={
+                  <ProtectedRoute>
+                    <Attendance />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/fees" 
+                element={
+                  <ProtectedRoute>
+                    <Fees />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/student-admission" 
+                element={
+                  <ProtectedRoute>
+                    <StudentAdmission />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/notifications" 
+                element={
+                  <ProtectedRoute>
+                    <Notifications />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/documents" 
+                element={
+                  <ProtectedRoute>
+                    <Documents />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/library" 
+                element={
+                  <ProtectedRoute>
+                    <Library />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/books" 
+                element={
+                  <ProtectedRoute>
+                    <Books />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/book-issues" 
+                element={
+                  <ProtectedRoute>
+                    <BookIssues />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/stationary" 
+                element={
+                  <ProtectedRoute>
+                    <Stationary />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/expenses" 
+                element={
+                  <ProtectedRoute>
+                    <Expenses />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/student-promotion" 
+                element={
+                  <ProtectedRoute>
+                    <StudentPromotion />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-classes" 
+                element={
+                  <ProtectedRoute>
+                    <MyClasses />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/applications" 
+                element={
+                  <ProtectedRoute>
+                    <Applications />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* 404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+}
 
 export default App;

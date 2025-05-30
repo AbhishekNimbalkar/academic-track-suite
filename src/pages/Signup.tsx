@@ -7,39 +7,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { School } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
-const Login: React.FC = () => {
+const Signup: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("teacher");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, navigate]);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      navigate("/dashboard");
-    } catch (error) {
-      // Error handling is done in the AuthContext
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: role
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Account created!",
+        description: "Please check your email to verify your account.",
+      });
+      
+      navigate("/login");
+    } catch (error: any) {
+      toast({
+        title: "Signup failed",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Quick admin login for testing
-  const handleAdminLogin = () => {
-    setEmail("admin@school.com");
-    setPassword("admin123");
   };
 
   return (
@@ -50,14 +61,14 @@ const Login: React.FC = () => {
             <School className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold">School Management System</h1>
-          <p className="text-muted-foreground">Login to access your dashboard</p>
+          <p className="text-muted-foreground">Create your account</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Login</CardTitle>
+            <CardTitle>Sign Up</CardTitle>
             <CardDescription>
-              Enter your credentials to access your account
+              Create a new account to access the system
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -84,6 +95,18 @@ const Login: React.FC = () => {
                   required
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrator</SelectItem>
+                    <SelectItem value="teacher">Teacher</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <Button
@@ -91,41 +114,20 @@ const Login: React.FC = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Creating account..." : "Sign Up"}
               </Button>
-              
-              <div className="flex flex-col space-y-2 w-full">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleAdminLogin}
-                >
-                  Fill Admin Credentials
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  Admin: admin@school.com / admin123
-                </p>
-              </div>
-
               <p className="text-sm text-center text-muted-foreground">
-                Need an account?{" "}
-                <Link to="/signup" className="text-primary hover:underline">
-                  Sign up
+                Already have an account?{" "}
+                <Link to="/login" className="text-primary hover:underline">
+                  Sign in
                 </Link>
               </p>
             </CardFooter>
           </form>
         </Card>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Contact your administrator for login credentials.
-          </p>
-        </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Signup;

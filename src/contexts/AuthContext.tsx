@@ -54,22 +54,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role
+          // Fetch user role from user_profiles table
           setTimeout(async () => {
             try {
-              const { data: profile } = await supabase
+              const { data: profile, error } = await supabase
                 .from('user_profiles')
                 .select('role')
                 .eq('id', session.user.id)
                 .single();
               
-              setUserRole(profile?.role || null);
+              if (error) {
+                console.error('Error fetching user role:', error);
+                // If no profile exists, create one with default role
+                if (error.code === 'PGRST116') {
+                  const { error: insertError } = await supabase
+                    .from('user_profiles')
+                    .insert({
+                      id: session.user.id,
+                      role: 'teacher'
+                    });
+                  
+                  if (!insertError) {
+                    setUserRole('teacher');
+                  }
+                }
+              } else {
+                setUserRole(profile?.role || 'teacher');
+              }
             } catch (error) {
-              console.error('Error fetching user role:', error);
+              console.error('Error in role fetch:', error);
+              setUserRole('teacher'); // Default fallback
             }
           }, 0);
         } else {
@@ -82,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
