@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { School } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -28,7 +27,7 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate("/dashboard");
+      // Navigation is handled in the login function
     } catch (error) {
       // Error handling is done in the AuthContext
     } finally {
@@ -113,6 +112,10 @@ const Login: React.FC = () => {
                 <Link to="/signup" className="text-primary hover:underline">
                   Sign up
                 </Link>
+                {" | "}
+                <Link to="/create-admin" className="text-primary hover:underline">
+                  Create Admin
+                </Link>
               </p>
             </CardFooter>
           </form>
@@ -120,7 +123,7 @@ const Login: React.FC = () => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Contact your administrator for login credentials.
+            Contact your administrator for login credentials or create an admin account.
           </p>
         </div>
       </div>

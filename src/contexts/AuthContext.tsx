@@ -41,6 +41,23 @@ const ROLE_PERMISSIONS = {
   ],
 };
 
+// Cleanup function to prevent auth limbo states
+const cleanupAuthState = () => {
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
@@ -51,16 +68,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
+        
+        if (!mounted) return;
+
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role from user_profiles table
+          // Defer user profile fetching to prevent deadlocks
           setTimeout(async () => {
+            if (!mounted) return;
+            
             try {
               const { data: profile, error } = await supabase
                 .from('user_profiles')
@@ -70,25 +94,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               
               if (error) {
                 console.error('Error fetching user role:', error);
-                // If no profile exists, create one with default role
                 if (error.code === 'PGRST116') {
+                  // Profile doesn't exist, create one
                   const { error: insertError } = await supabase
                     .from('user_profiles')
                     .insert({
                       id: session.user.id,
-                      role: 'teacher'
+                      role: 'teacher',
+                      email: session.user.email
                     });
                   
-                  if (!insertError) {
+                  if (!insertError && mounted) {
                     setUserRole('teacher');
                   }
+                } else {
+                  // Set default role on error
+                  if (mounted) setUserRole('teacher');
                 }
               } else {
-                setUserRole(profile?.role || 'teacher');
+                if (mounted) setUserRole(profile?.role || 'teacher');
               }
             } catch (error) {
               console.error('Error in role fetch:', error);
-              setUserRole('teacher'); // Default fallback
+              if (mounted) setUserRole('teacher');
             }
           }, 0);
         } else {
@@ -101,17 +129,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
+      if (!session) {
+        setIsLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log('Global signout failed (continuing):', err);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -123,6 +168,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         title: "Welcome back!",
         description: "You have been logged in successfully.",
       });
+
+      // Force page refresh for clean state
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Login failed",
@@ -135,8 +185,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Clean up auth state first
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Signout error (ignoring):', err);
+      }
       
       setUser(null);
       setSession(null);
@@ -146,13 +203,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         title: "Logged out",
         description: "You have been logged out successfully",
       });
+
+      // Force page refresh for clean state
+      window.location.href = '/';
     } catch (error: any) {
       toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
+        title: "Logout completed",
+        description: "You have been logged out",
       });
-      throw error;
+      // Force refresh even on error
+      window.location.href = '/';
     }
   };
 

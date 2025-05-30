@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 const CreateAdmin: React.FC = () => {
   const [email, setEmail] = useState("admin@school.com");
   const [password, setPassword] = useState("admin123");
+  const [firstName, setFirstName] = useState("Admin");
+  const [lastName, setLastName] = useState("User");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -20,63 +22,44 @@ const CreateAdmin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // First, try to sign up the admin user
+      // Sign up the admin user
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            role: 'admin'
+            role: 'admin',
+            first_name: firstName,
+            last_name: lastName
           }
         }
       });
 
-      if (signUpError && signUpError.message.includes('already registered')) {
-        // User exists, just update their role
-        const { data: users } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('id', signUpData?.user?.id);
-
-        if (users && users.length > 0) {
-          const { error: updateError } = await supabase
-            .from('user_profiles')
-            .update({ role: 'admin' })
-            .eq('id', signUpData?.user?.id);
-
-          if (updateError) throw updateError;
+      if (signUpError) {
+        if (signUpError.message.includes('already registered')) {
+          toast({
+            title: "User already exists",
+            description: "An account with this email already exists. Try logging in instead.",
+            variant: "destructive",
+          });
+        } else {
+          throw signUpError;
         }
-      } else if (signUpError) {
-        throw signUpError;
-      }
-
-      // Try to insert/update admin role directly in the database
-      const { error: upsertError } = await supabase
-        .from('user_profiles')
-        .upsert({ 
-          id: signUpData?.user?.id || crypto.randomUUID(),
-          role: 'admin' 
-        }, { 
-          onConflict: 'id' 
+      } else {
+        toast({
+          title: "Admin Created Successfully!",
+          description: `Admin account created with email: ${email}. You can now log in.`,
         });
-
-      if (upsertError) {
-        console.log('Upsert error (this might be expected):', upsertError);
       }
-
-      toast({
-        title: "Admin Created Successfully!",
-        description: `Admin account created with email: ${email}`,
-      });
 
       navigate("/login");
     } catch (error: any) {
       console.error('Admin creation error:', error);
       toast({
-        title: "Admin Creation",
-        description: `Admin account setup initiated. Use email: ${email} and password: ${password} to login.`,
+        title: "Error creating admin",
+        description: error.message || "Failed to create admin account",
+        variant: "destructive",
       });
-      navigate("/login");
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +84,30 @@ const CreateAdmin: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Admin"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="User"
+                  required
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Admin Email</Label>
               <Input

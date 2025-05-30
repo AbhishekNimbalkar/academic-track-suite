@@ -246,18 +246,27 @@ export type Database = {
       }
       user_profiles: {
         Row: {
-          created_at: string
+          created_at: string | null
+          email: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           role: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
           id: string
-          role: string
+          last_name?: string | null
+          role?: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           role?: string
         }
         Relationships: []
@@ -267,7 +276,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id?: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
