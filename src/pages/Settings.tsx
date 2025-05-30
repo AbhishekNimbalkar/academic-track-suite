@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,8 +25,8 @@ import {
 } from "lucide-react";
 
 const Settings: React.FC = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { user, userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const { toast } = useToast();
   
   const [emailSettings, setEmailSettings] = useState({
@@ -150,7 +149,7 @@ const Settings: React.FC = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="fullName">Full Name</Label>
-                          <Input id="fullName" defaultValue={user?.name} />
+                          <Input id="fullName" defaultValue={user?.email?.split('@')[0]} />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="email">Email</Label>
