@@ -13,8 +13,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 const formSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
+  gender: z.enum(["male", "female", "other"], { required_error: "Gender is required" }),
+  bloodGroup: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], { required_error: "Blood group is required" }),
   class: z.string().min(1, "Class is required"),
   section: z.string().min(1, "Section is required"),
+  stream: z.enum(["APC", "USA"]).optional(),
   parentName: z.string().min(2, "Parent name is required"),
   parentEmail: z.string().email("Invalid email"),
   parentPhone: z.string().min(10, "Phone number is required"),
@@ -45,8 +48,11 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
     defaultValues: {
       fullName: "",
       dateOfBirth: "",
+      gender: "male",
+      bloodGroup: "A+",
       class: "",
       section: "",
+      stream: undefined,
       parentName: "",
       parentEmail: "",
       parentPhone: "",
@@ -60,6 +66,23 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
       ...defaultValues
     }
   });
+
+  const selectedClass = form.watch("class");
+  const showStreamSelection = selectedClass === "11" || selectedClass === "12";
+
+  const getClassOptions = () => {
+    const options = [
+      { value: "LKG", label: "LKG" },
+      { value: "UKG", label: "UKG" },
+    ];
+    
+    // Add classes 1-12
+    for (let i = 1; i <= 12; i++) {
+      options.push({ value: i.toString(), label: `Class ${i}` });
+    }
+    
+    return options;
+  };
 
   return (
     <Form {...form}>
@@ -95,6 +118,52 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
 
           <FormField
             control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Gender</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="bloodGroup"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Blood Group</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select blood group" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                      <SelectItem key={bg} value={bg}>{bg}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="class"
             render={({ field }) => (
               <FormItem>
@@ -106,9 +175,9 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        {i + 1}
+                    {getClassOptions().map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -143,6 +212,52 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             )}
           />
 
+          {showStreamSelection && (
+            <FormField
+              control={form.control}
+              name="stream"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stream (Classes 11-12)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select stream" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="APC">APC Stream</SelectItem>
+                      <SelectItem value="USA">USA Stream</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
+            name="residentialType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Residential Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="residential">Residential</SelectItem>
+                    <SelectItem value="non-residential">Non-Residential</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="parentName"
@@ -166,28 +281,6 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
                 <FormControl>
                   <Input placeholder="Caste" {...field} />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="residentialType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Residential Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="residential">Residential</SelectItem>
-                    <SelectItem value="non-residential">Non-Residential</SelectItem>
-                  </SelectContent>
-                </Select>
                 <FormMessage />
               </FormItem>
             )}

@@ -35,6 +35,8 @@ const Students: React.FC = () => {
   const [newStudent, setNewStudent] = useState<Omit<Student, "id">>({
     fullName: "",
     dateOfBirth: "",
+    gender: "male",
+    bloodGroup: "A+",
     class: "",
     section: "",
     admissionDate: new Date().toISOString().split("T")[0],
@@ -44,6 +46,10 @@ const Students: React.FC = () => {
     parentPhone: "",
     address: "",
     medicalInfo: "",
+    caste: "",
+    residentialType: "non-residential",
+    aadhaarNumber: "",
+    panCardNumber: "",
   });
   const { toast } = useToast();
   const navigate = useNavigate();

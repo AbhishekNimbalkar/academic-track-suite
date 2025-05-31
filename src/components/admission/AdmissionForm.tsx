@@ -19,19 +19,25 @@ export const AdmissionForm: React.FC<AdmissionFormProps> = ({
   const handleFormSubmit = (data: StudentFormValues) => {
     // Combine form data with image
     const studentData: Omit<Student, "id"> = {
-      fullName: data.fullName, // Ensure required fields are set
-      dateOfBirth: data.dateOfBirth || new Date().toISOString().split("T")[0],
-      class: data.class || "",
-      section: data.section || "",
-      admissionDate: data.admissionDate || new Date().toISOString().split("T")[0],
-      parentName: data.parentName || "",
-      parentEmail: data.parentEmail || "",
-      parentPhone: data.parentPhone || "",
-      address: data.address || "",
+      fullName: data.fullName,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      bloodGroup: data.bloodGroup,
+      class: data.class,
+      section: data.section,
+      stream: data.stream,
+      admissionDate: data.admissionDate,
+      parentName: data.parentName,
+      parentEmail: data.parentEmail,
+      parentPhone: data.parentPhone,
+      address: data.address,
       medicalInfo: data.medicalInfo || "",
       imageUrl: studentImage || undefined,
-      // Set admission class to the selected class if not already set
-      admissionClass: data.class || ""
+      admissionClass: data.class,
+      caste: data.caste,
+      residentialType: data.residentialType,
+      aadhaarNumber: data.aadhaarNumber,
+      panCardNumber: data.panCardNumber,
     };
     
     onSubmit(studentData);

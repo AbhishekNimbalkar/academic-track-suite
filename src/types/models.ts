@@ -1,21 +1,25 @@
+
 export interface Student {
   id: string;
   fullName: string;
   dateOfBirth: string;
+  gender: "male" | "female" | "other";
+  bloodGroup: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
   class: string;
   section: string;
+  stream?: "APC" | "USA"; // For classes 11-12
   admissionDate: string;
-  admissionClass: string; // For tracking academic history
+  admissionClass: string;
   parentName: string;
   parentEmail: string;
   parentPhone: string;
   address: string;
   medicalInfo: string;
-  caste?: string;  // Added for admission form
-  residentialType?: "residential" | "non-residential"; // Added for admission form
-  aadhaarNumber?: string; // Added for admission form
-  panCardNumber?: string; // Added for admission form
-  imageUrl?: string; // Added for student image
+  caste?: string;
+  residentialType?: "residential" | "non-residential";
+  aadhaarNumber?: string;
+  panCardNumber?: string;
+  imageUrl?: string;
   academicHistory?: AcademicRecord[];
 }
 
