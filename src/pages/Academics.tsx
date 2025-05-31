@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Marks } from "@/types/models";
@@ -195,7 +196,7 @@ const Academics: React.FC = () => {
                         <Badge
                           variant={
                             subject.grade === "A+" || subject.grade === "A"
-                              ? "success"
+                              ? "default"
                               : subject.grade === "B+" || subject.grade === "B"
                               ? "secondary"
                               : "destructive"

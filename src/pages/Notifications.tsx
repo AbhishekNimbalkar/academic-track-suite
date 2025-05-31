@@ -29,7 +29,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Send, MessageSquare, AlertCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Bell, Send, MessageSquare, AlertCircle, Mail, Plus, Search, RefreshCw, MailCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Notifications: React.FC = () => {

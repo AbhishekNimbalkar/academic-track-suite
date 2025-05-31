@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Attendance, TeacherAttendance } from "@/types/models";
+import type { Attendance, TeacherAttendance } from "@/types/models";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
