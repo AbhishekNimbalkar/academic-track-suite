@@ -27,6 +27,9 @@ const ROLE_PERMISSIONS = {
     "manage_stationary",
     "manage_admissions",
     "promote_students",
+    "manage_classes",
+    "manage_subjects",
+    "generate_documents",
   ],
   teacher: [
     "manage_marks",
@@ -35,10 +38,21 @@ const ROLE_PERMISSIONS = {
     "create_student_applications",
     "view_students",
     "manage_admissions",
+    "view_assigned_class_only",
+  ],
+  stationary: [
+    "manage_stationary_expenses",
+    "view_stationary_reports",
+    "add_stationary_items",
+  ],
+  medical: [
+    "manage_medical_expenses",
+    "view_medical_reports",
+    "add_medical_records",
   ],
 };
 
-// Mock users database
+// Mock users database with new roles
 const MOCK_USERS = {
   "admin@school.com": {
     password: "admin123",
@@ -49,6 +63,16 @@ const MOCK_USERS = {
     password: "teacher123", 
     role: "teacher",
     email: "teacher@school.com"
+  },
+  "stationary@school.com": {
+    password: "stationary123",
+    role: "stationary", 
+    email: "stationary@school.com"
+  },
+  "medical@school.com": {
+    password: "medical123",
+    role: "medical",
+    email: "medical@school.com"
   }
 };
 
@@ -92,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       toast({
         title: "Welcome back!",
-        description: "You have been logged in successfully.",
+        description: `You have been logged in as ${mockUser.role}.`,
       });
     } catch (error: any) {
       toast({

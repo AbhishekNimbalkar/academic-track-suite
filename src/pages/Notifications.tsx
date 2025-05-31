@@ -1,6 +1,6 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { Notification } from "@/types/models";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
@@ -9,6 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -17,37 +28,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  Search,
-  Bell,
-  Mail,
-  MessageSquare,
-  Plus,
-  RefreshCw,
-  MailCheck,
-  AlertCircle
-} from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Notification } from "@/types/models";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Send, MessageSquare, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Notifications: React.FC = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("all");

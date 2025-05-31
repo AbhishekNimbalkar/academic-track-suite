@@ -35,16 +35,25 @@ const Login: React.FC = () => {
     }
   };
 
-  // Quick admin login for testing
+  // Quick login functions for testing
   const handleAdminLogin = () => {
     setEmail("admin@school.com");
     setPassword("admin123");
   };
 
-  // Quick teacher login for testing
   const handleTeacherLogin = () => {
     setEmail("teacher@school.com");
     setPassword("teacher123");
+  };
+
+  const handleStationaryLogin = () => {
+    setEmail("stationary@school.com");
+    setPassword("stationary123");
+  };
+
+  const handleMedicalLogin = () => {
+    setEmail("medical@school.com");
+    setPassword("medical123");
   };
 
   return (
@@ -54,7 +63,7 @@ const Login: React.FC = () => {
           <div className="inline-flex items-center justify-center p-2 bg-primary rounded-full mb-4">
             <School className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold">School Management System</h1>
+          <h1 className="text-2xl font-bold">IPS Education System</h1>
           <p className="text-muted-foreground">Login to access your dashboard</p>
         </div>
 
@@ -100,25 +109,45 @@ const Login: React.FC = () => {
               </Button>
               
               <div className="flex flex-col space-y-2 w-full">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleAdminLogin}
-                >
-                  Fill Admin Credentials
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleTeacherLogin}
-                >
-                  Fill Teacher Credentials
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleAdminLogin}
+                  >
+                    Admin Login
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleTeacherLogin}
+                  >
+                    Teacher Login
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleStationaryLogin}
+                  >
+                    Stationary Login
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleMedicalLogin}
+                  >
+                    Medical Login
+                  </Button>
+                </div>
                 <div className="text-xs text-center text-muted-foreground space-y-1">
-                  <p>Admin: admin@school.com / admin123</p>
-                  <p>Teacher: teacher@school.com / teacher123</p>
+                  <p><strong>Admin:</strong> admin@school.com / admin123</p>
+                  <p><strong>Teacher:</strong> teacher@school.com / teacher123</p>
+                  <p><strong>Stationary:</strong> stationary@school.com / stationary123</p>
+                  <p><strong>Medical:</strong> medical@school.com / medical123</p>
                 </div>
               </div>
             </CardFooter>
@@ -127,7 +156,7 @@ const Login: React.FC = () => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Use the demo credentials above to access the system.
+            Use the demo credentials above to access the IPS Education System.
           </p>
         </div>
       </div>
