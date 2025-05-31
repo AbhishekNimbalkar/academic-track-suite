@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Fee } from "@/types/models";
 import {
@@ -27,8 +26,8 @@ interface FeeListProps {
 }
 
 export const FeeList: React.FC<FeeListProps> = ({ fees, onViewDetails }) => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
 
   return (
     <div className="rounded-md border">

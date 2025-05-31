@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Fee } from "@/types/models";
 import {
@@ -38,8 +37,8 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
   onPayInstallment,
   getRemainingPoolAmount,
 }) => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
 
   if (!selectedFee) return null;

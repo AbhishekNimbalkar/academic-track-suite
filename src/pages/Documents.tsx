@@ -54,8 +54,8 @@ interface Document {
 }
 
 const Documents: React.FC = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("all");

@@ -22,8 +22,8 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Students: React.FC = () => {
-  const { user, hasPermission } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { user, hasPermission, userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const canAddStudents = hasPermission("manage_students") || hasPermission("create_student_applications");
   const [students, setStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState("");

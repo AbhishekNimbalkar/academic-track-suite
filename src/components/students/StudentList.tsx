@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Table,
@@ -34,8 +33,8 @@ interface StudentListProps {
 }
 
 export function StudentList({ students, onDeleteClick, onEditClick }: StudentListProps) {
-  const { hasPermission, user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { hasPermission, userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   
   if (students.length === 0) {
