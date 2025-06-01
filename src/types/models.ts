@@ -1,4 +1,3 @@
-
 export interface Student {
   id: string;
   fullName: string;
@@ -120,11 +119,61 @@ export interface FeeRecord {
 export interface Document {
   id: string;
   studentId: string;
+  studentName: string;
   type: "bonafide" | "marksheet" | "transfer" | "character" | "fee_receipt";
   generatedDate: string;
   academicYear: string;
-  fileUrl?: string;
+  class: string;
+  section: string;
   status: "generated" | "downloaded" | "printed";
+  fileUrl?: string;
+  templateData?: DocumentTemplateData;
+}
+
+export interface DocumentTemplateData {
+  studentDetails: {
+    fullName: string;
+    fatherName: string;
+    motherName: string;
+    dateOfBirth: string;
+    class: string;
+    section: string;
+    rollNumber?: string;
+    admissionDate: string;
+    academicYear: string;
+  };
+  schoolDetails: {
+    name: string;
+    address: string;
+    principal: string;
+    affiliationNumber: string;
+  };
+  purpose?: string;
+  marks?: {
+    subjects: Array<{
+      name: string;
+      marksObtained: number;
+      totalMarks: number;
+      grade: string;
+    }>;
+    totalMarks: number;
+    percentage: number;
+    result: string;
+  };
+  conduct?: string;
+  character?: string;
+  reasonForLeaving?: string;
+}
+
+export interface DocumentTemplate {
+  id: string;
+  type: "bonafide" | "marksheet" | "transfer" | "character" | "fee_receipt";
+  name: string;
+  content: string;
+  variables: string[];
+  isActive: boolean;
+  createdDate: string;
+  lastModified: string;
 }
 
 export interface Teacher {
