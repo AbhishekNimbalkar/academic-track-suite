@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Fee } from "@/types/models";
 import {
@@ -6,7 +7,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -18,9 +18,16 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { DollarSign, FileText, Plus } from "lucide-react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DollarSign, FileText, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { AddExpenseDialog } from "./AddExpenseDialog";
+import { ExpenseManager } from "./ExpenseManager";
 
 interface FeeDetailsDialogProps {
   isOpen: boolean;
@@ -39,13 +46,22 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
 }) => {
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
-  const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
 
   if (!selectedFee) return null;
 
+  const handlePayment = (installmentId: string) => {
+    onPayInstallment(selectedFee.id, installmentId);
+  };
+
+  const handleAddExpense = (expense: Omit<Fee["expenses"][0], "id">) => {
+    // This will be handled by the parent component
+    console.log("Adding expense:", expense);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Fee Details</DialogTitle>
           <DialogDescription>
@@ -78,6 +94,24 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
             </div>
           </div>
           
+          {/* Payment Method Selection for Admins */}
+          {isAdmin && (
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethod">Payment Method</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="online">Online Transfer</SelectItem>
+                  <SelectItem value="card">Card Payment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
           <div>
             <h3 className="text-lg font-semibold mb-2">Installments</h3>
             <div className="rounded-md border">
@@ -88,6 +122,7 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Paid Date</TableHead>
+                    <TableHead>Payment Method</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -120,19 +155,23 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
                           ? new Date(installment.paidDate).toLocaleDateString()
                           : "-"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell>
+                        {installment.paymentMethod || "-"}
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
                         {installment.status !== "paid" && isAdmin && (
                           <Button
                             size="sm"
-                            onClick={() =>
-                              onPayInstallment(
-                                selectedFee.id,
-                                installment.id
-                              )
-                            }
+                            onClick={() => handlePayment(installment.id)}
                           >
                             <DollarSign className="h-4 w-4 mr-1" />
                             Mark as Paid
+                          </Button>
+                        )}
+                        {installment.status === "paid" && (
+                          <Button variant="outline" size="sm">
+                            <Receipt className="h-4 w-4 mr-1" />
+                            Receipt
                           </Button>
                         )}
                       </TableCell>
@@ -149,11 +188,10 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
                 Medical & Stationary Expenses
               </h3>
               {isAdmin && (
-                <AddExpenseDialog 
-                  isOpen={isAddExpenseDialogOpen}
-                  onOpenChange={setIsAddExpenseDialogOpen}
+                <ExpenseManager 
                   selectedFee={selectedFee}
                   remainingAmount={getRemainingPoolAmount(selectedFee)}
+                  onAddExpense={handleAddExpense}
                 />
               )}
             </div>
@@ -165,6 +203,7 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
                     <TableHead>Description</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead>Bill Number</TableHead>
                     {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -177,9 +216,16 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
                         </TableCell>
                         <TableCell>{expense.description}</TableCell>
                         <TableCell className="capitalize">
-                          {expense.category}
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            expense.category === "medical" 
+                              ? "bg-red-100 text-red-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}>
+                            {expense.category}
+                          </span>
                         </TableCell>
                         <TableCell>₹{expense.amount.toLocaleString()}</TableCell>
+                        <TableCell>{expense.billNumber || "-"}</TableCell>
                         {isAdmin && (
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm">
@@ -193,10 +239,13 @@ export const FeeDetailsDialog: React.FC<FeeDetailsDialogProps> = ({
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={isAdmin ? 5 : 4}
-                        className="text-center py-4"
+                        colSpan={isAdmin ? 6 : 5}
+                        className="text-center py-8"
                       >
-                        No expenses recorded yet.
+                        <div className="flex flex-col items-center space-y-2">
+                          <FileText className="h-8 w-8 text-gray-400" />
+                          <p className="text-sm text-gray-500">No expenses recorded yet.</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
