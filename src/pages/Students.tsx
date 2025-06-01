@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Student } from "@/types/models";
@@ -76,6 +75,8 @@ const Students: React.FC = () => {
         id: student.student_id,
         fullName: `${student.first_name} ${student.last_name}`,
         dateOfBirth: student.date_of_birth,
+        gender: "male", // Default value since not in Supabase schema
+        bloodGroup: "A+", // Default value since not in Supabase schema
         class: student.current_class,
         section: "A", // Default section since it's not in Supabase schema
         admissionDate: student.admission_date,
@@ -85,6 +86,10 @@ const Students: React.FC = () => {
         parentPhone: student.parent_phone,
         address: "", // Not in Supabase schema
         medicalInfo: student.medical_details || "",
+        caste: "", // Default value since not in Supabase schema
+        residentialType: "non-residential", // Default value since not in Supabase schema
+        aadhaarNumber: "", // Default value since not in Supabase schema
+        panCardNumber: "", // Default value since not in Supabase schema
       }));
 
       setStudents(formattedStudents);

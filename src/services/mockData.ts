@@ -1,3 +1,4 @@
+
 import { Student, Marks, Attendance, Fee, AttendanceRecord, AcademicRecord, FeeRecord, BookIssue } from "@/types/models";
 
 // Helper function to generate a random ID
@@ -8,11 +9,15 @@ export const generateMockStudents = (count: number): Student[] => {
   const classes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
   const sections = ["A", "B", "C"];
   const residentialTypes: ("residential" | "non-residential")[] = ["residential", "non-residential"];
+  const genders: ("male" | "female" | "other")[] = ["male", "female", "other"];
+  const bloodGroups: ("A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-")[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   
   return Array.from({ length: count }).map((_, index) => {
     const studentClass = classes[Math.floor(Math.random() * classes.length)];
     const studentSection = sections[Math.floor(Math.random() * sections.length)];
     const residentialType = residentialTypes[Math.floor(Math.random() * residentialTypes.length)];
+    const gender = genders[Math.floor(Math.random() * genders.length)];
+    const bloodGroup = bloodGroups[Math.floor(Math.random() * bloodGroups.length)];
     
     return {
       id: `STU${(index + 1).toString().padStart(4, "0")}`,
@@ -22,6 +27,8 @@ export const generateMockStudents = (count: number): Student[] => {
         Math.floor(Math.random() * 12),
         Math.floor(Math.random() * 28) + 1
       ).toISOString().split("T")[0],
+      gender,
+      bloodGroup,
       class: studentClass,
       section: studentSection,
       admissionDate: new Date(
