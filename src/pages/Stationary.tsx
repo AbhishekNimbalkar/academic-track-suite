@@ -3,7 +3,7 @@ import React from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { StationaryExpenseManager } from "@/components/expenses/StationaryExpenseManager";
+import { EnhancedStationaryManager } from "@/components/expenses/EnhancedStationaryManager";
 
 const Stationary: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -17,7 +17,7 @@ const Stationary: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Stationary Management</h1>
-        <StationaryExpenseManager />
+        <EnhancedStationaryManager />
       </div>
     </MainLayout>
   );

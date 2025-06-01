@@ -1,3 +1,4 @@
+
 export interface Student {
   id: string;
   fullName: string;
@@ -224,7 +225,7 @@ export interface BookIssue {
   status: "issued" | "returned" | "overdue";
 }
 
-// Add types for expenses
+// Enhanced expense types for proper tracking
 export interface StationaryExpense {
   id: string;
   studentId: string;
@@ -232,7 +233,54 @@ export interface StationaryExpense {
   date: string;
   amount: number;
   description: string;
-  academic_year: string;
+  academicYear: string;
+  class: string;
+  section: string;
+  type: "individual" | "common";
+  billNumber?: string;
+  receiptGenerated?: boolean;
+}
+
+export interface MedicalExpense {
+  id: string;
+  studentId: string;
+  studentName: string;
+  date: string;
+  doctorFee: number;
+  medicalFee: number;
+  total: number;
+  description: string;
+  academicYear: string;
+  class: string;
+  section: string;
+  receiptGenerated?: boolean;
+}
+
+export interface CommonExpense {
+  id: string;
+  date: string;
+  description: string;
+  totalAmount: number;
+  category: "medical" | "stationary";
+  class: string;
+  section: string;
+  academicYear: string;
+  studentsAffected: string[];
+  amountPerStudent: number;
+  addedBy: string;
+}
+
+export interface ExpenseFund {
+  studentId: string;
+  studentName: string;
+  class: string;
+  section: string;
+  academicYear: string;
+  initialAmount: number; // ₹9,000 for new, ₹7,000 for promoted
+  totalExpenses: number;
+  remainingBalance: number;
+  isNegative: boolean;
+  negativeAmount?: number;
 }
 
 // Add types for student promotion

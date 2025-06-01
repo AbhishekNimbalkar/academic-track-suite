@@ -3,7 +3,7 @@ import React from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { MedicalExpenseManager } from "@/components/expenses/MedicalExpenseManager";
+import { EnhancedMedicalManager } from "@/components/expenses/EnhancedMedicalManager";
 
 const Medical: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -17,7 +17,7 @@ const Medical: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Medical Management</h1>
-        <MedicalExpenseManager />
+        <EnhancedMedicalManager />
       </div>
     </MainLayout>
   );

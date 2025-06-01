@@ -6,8 +6,8 @@ import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MedicalDashboard } from "@/components/dashboard/MedicalDashboard";
 import { StationaryDashboard } from "@/components/dashboard/StationaryDashboard";
-import { MedicalExpenseManager } from "@/components/expenses/MedicalExpenseManager";
-import { StationaryExpenseManager } from "@/components/expenses/StationaryExpenseManager";
+import { EnhancedMedicalManager } from "@/components/expenses/EnhancedMedicalManager";
+import { EnhancedStationaryManager } from "@/components/expenses/EnhancedStationaryManager";
 import { ExpenseAnalytics } from "@/components/expenses/ExpenseAnalytics";
 
 const Expenses: React.FC = () => {
@@ -41,11 +41,11 @@ const Expenses: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="medical">
-            <MedicalExpenseManager />
+            <EnhancedMedicalManager />
           </TabsContent>
           
           <TabsContent value="stationary">
-            <StationaryExpenseManager />
+            <EnhancedStationaryManager />
           </TabsContent>
 
           <TabsContent value="analytics">

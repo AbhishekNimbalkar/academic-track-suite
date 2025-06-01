@@ -1,0 +1,419 @@
+
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Search, Heart, Download, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { dataService } from "@/services/mockData";
+import { Student, MedicalExpense, ExpenseFund } from "@/types/models";
+
+export const EnhancedMedicalManager: React.FC = () => {
+  const { toast } = useToast();
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
+  const [medicalExpenses, setMedicalExpenses] = useState<MedicalExpense[]>([]);
+  const [funds, setFunds] = useState<ExpenseFund[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Dialog states
+  const [isMedicalDialogOpen, setIsMedicalDialogOpen] = useState(false);
+  
+  // Form states
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [doctorFee, setDoctorFee] = useState("");
+  const [medicalFee, setMedicalFee] = useState("");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    const studentData = dataService.getStudents().filter(s => s.residentialType === "residential");
+    setStudents(studentData);
+    loadMockData();
+  }, []);
+
+  const loadMockData = () => {
+    // Mock expense fund data (shared with stationary)
+    const mockFunds: ExpenseFund[] = [
+      {
+        studentId: "STU001",
+        studentName: "John Doe",
+        class: "10",
+        section: "A",
+        academicYear: "2024-25",
+        initialAmount: 9000,
+        totalExpenses: 2500,
+        remainingBalance: 6500,
+        isNegative: false
+      },
+      {
+        studentId: "STU002",
+        studentName: "Jane Smith",
+        class: "10",
+        section: "A",
+        academicYear: "2024-25",
+        initialAmount: 7000,
+        totalExpenses: 7500,
+        remainingBalance: -500,
+        isNegative: true,
+        negativeAmount: 500
+      }
+    ];
+    setFunds(mockFunds);
+
+    // Mock medical expenses
+    const mockMedicalExpenses: MedicalExpense[] = [
+      {
+        id: "ME001",
+        studentId: "STU001",
+        studentName: "John Doe",
+        date: "2024-01-15",
+        doctorFee: 300,
+        medicalFee: 200,
+        total: 500,
+        description: "Regular health checkup",
+        academicYear: "2024-25",
+        class: "10",
+        section: "A"
+      }
+    ];
+    setMedicalExpenses(mockMedicalExpenses);
+  };
+
+  const getClassOptions = () => {
+    const classes = [...new Set(students.map(s => s.class))].sort();
+    return classes;
+  };
+
+  const getSectionOptions = (selectedClass: string) => {
+    const sections = [...new Set(students.filter(s => s.class === selectedClass).map(s => s.section))].sort();
+    return sections;
+  };
+
+  const getFilteredStudents = () => {
+    return students.filter(s => 
+      (!selectedClass || s.class === selectedClass) &&
+      (!selectedSection || s.section === selectedSection) &&
+      s.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const getStudentFund = (studentId: string) => {
+    return funds.find(f => f.studentId === studentId);
+  };
+
+  const handleAddMedicalExpense = () => {
+    if (!selectedStudent || !doctorFee || !medicalFee || !description) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doctorAmount = parseFloat(doctorFee);
+    const medicalAmount = parseFloat(medicalFee);
+    const totalAmount = doctorAmount + medicalAmount;
+    const student = students.find(s => s.id === selectedStudent);
+    const fund = getStudentFund(selectedStudent);
+
+    if (!student || !fund) {
+      toast({
+        title: "Error",
+        description: "Student or fund information not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newExpense: MedicalExpense = {
+      id: `ME${Date.now()}`,
+      studentId: selectedStudent,
+      studentName: student.fullName,
+      date: new Date().toISOString().split("T")[0],
+      doctorFee: doctorAmount,
+      medicalFee: medicalAmount,
+      total: totalAmount,
+      description,
+      academicYear: "2024-25",
+      class: student.class,
+      section: student.section
+    };
+
+    setMedicalExpenses([...medicalExpenses, newExpense]);
+
+    // Update fund
+    const updatedFund = {
+      ...fund,
+      totalExpenses: fund.totalExpenses + totalAmount,
+      remainingBalance: fund.remainingBalance - totalAmount,
+      isNegative: fund.remainingBalance - totalAmount < 0,
+      negativeAmount: fund.remainingBalance - totalAmount < 0 ? Math.abs(fund.remainingBalance - totalAmount) : undefined
+    };
+
+    setFunds(funds.map(f => f.studentId === selectedStudent ? updatedFund : f));
+
+    toast({
+      title: "Medical Expense Added",
+      description: `₹${totalAmount} medical expense recorded for ${student.fullName}.`,
+    });
+
+    // Reset form
+    setSelectedStudent("");
+    setDoctorFee("");
+    setMedicalFee("");
+    setDescription("");
+    setIsMedicalDialogOpen(false);
+  };
+
+  const downloadCombinedReport = () => {
+    // Mock download functionality
+    toast({
+      title: "Report Downloaded",
+      description: "Combined medical expense overview has been downloaded.",
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Medical Management (Residential)</h2>
+        <div className="flex gap-2">
+          <Button onClick={downloadCombinedReport} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Download Report
+          </Button>
+          <Button onClick={() => setIsMedicalDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Medical Expense
+          </Button>
+        </div>
+      </div>
+
+      {/* Class and Section Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Class-wise Division</CardTitle>
+          <div className="flex gap-4">
+            <Select value={selectedClass} onValueChange={setSelectedClass}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Class" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Classes</SelectItem>
+                {getClassOptions().map(cls => (
+                  <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedSection} onValueChange={setSelectedSection}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Section" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Sections</SelectItem>
+                {getSectionOptions(selectedClass).map(sec => (
+                  <SelectItem key={sec} value={sec}>Section {sec}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search students..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <Tabs defaultValue="funds" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="funds">Medical Funds</TabsTrigger>
+          <TabsTrigger value="expenses">Medical Expenses</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="funds">
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Medical Funds</CardTitle>
+              <CardDescription>
+                Shared fund with stationary expenses - ₹9,000 for new students, ₹7,000 for promoted students
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {getFilteredStudents().map(student => {
+                  const fund = getStudentFund(student.id);
+                  if (!fund) return null;
+                  
+                  return (
+                    <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{student.fullName}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Class {student.class}-{student.section}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-medium">₹{fund.initialAmount.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">Initial Amount</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">₹{fund.totalExpenses.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">Total Expenses</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-medium ${fund.isNegative ? 'text-red-600' : 'text-green-600'}`}>
+                            ₹{Math.abs(fund.remainingBalance).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {fund.isNegative ? 'Negative Balance' : 'Remaining'}
+                          </p>
+                        </div>
+                        {fund.isNegative && (
+                          <Badge variant="destructive">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Due in Fees
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="expenses">
+          <Card>
+            <CardHeader>
+              <CardTitle>Medical Expenses</CardTitle>
+              <CardDescription>Per-student medical entries with doctor and medical fees</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {medicalExpenses.map(expense => (
+                  <div key={expense.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{expense.studentName}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {expense.description} • {expense.date}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Class {expense.class}-{expense.section}
+                      </p>
+                    </div>
+                    <div className="text-right space-y-1">
+                      <div className="font-medium text-lg">₹{expense.total.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Doctor: ₹{expense.doctorFee} | Medical: ₹{expense.medicalFee}
+                      </div>
+                      <Badge variant="outline">
+                        <Heart className="h-3 w-3 mr-1" />
+                        Medical
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Medical Expense Dialog */}
+      <Dialog open={isMedicalDialogOpen} onOpenChange={setIsMedicalDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Medical Expense</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="student">Student</Label>
+              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select student" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getFilteredStudents().map((student) => (
+                    <SelectItem key={student.id} value={student.id}>
+                      {student.fullName} (Class {student.class}-{student.section})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="doctorFee">Doctor Fee (₹)</Label>
+                <Input
+                  id="doctorFee"
+                  type="number"
+                  placeholder="Enter doctor fee"
+                  value={doctorFee}
+                  onChange={(e) => setDoctorFee(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="medicalFee">Medical Fee (₹)</Label>
+                <Input
+                  id="medicalFee"
+                  type="number"
+                  placeholder="Enter medical fee"
+                  value={medicalFee}
+                  onChange={(e) => setMedicalFee(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+
+            {doctorFee && medicalFee && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium">
+                  Total: ₹{(parseFloat(doctorFee || "0") + parseFloat(medicalFee || "0")).toFixed(2)}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Enter medical expense description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMedicalDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddMedicalExpense}>
+              Add Medical Expense
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
