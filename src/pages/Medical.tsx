@@ -3,24 +3,24 @@ import React from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { StationaryExpenseManager } from "@/components/expenses/StationaryExpenseManager";
+import { MedicalExpenseManager } from "@/components/expenses/MedicalExpenseManager";
 
-const Stationary: React.FC = () => {
+const Medical: React.FC = () => {
   const { hasPermission } = useAuth();
   
   // Check if user has permission
-  if (!hasPermission("manage_stationary") && !hasPermission("view_residential_students")) {
+  if (!hasPermission("manage_medical") && !hasPermission("view_residential_students")) {
     return <Navigate to="/dashboard" replace />;
   }
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Stationary Management</h1>
-        <StationaryExpenseManager />
+        <h1 className="text-2xl font-bold tracking-tight">Medical Management</h1>
+        <MedicalExpenseManager />
       </div>
     </MainLayout>
   );
 };
 
-export default Stationary;
+export default Medical;
