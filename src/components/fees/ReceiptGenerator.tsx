@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Print, FileText } from "lucide-react";
+import { Download, Printer, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ReceiptGeneratorProps {
@@ -226,7 +226,7 @@ Thank you for your payment!
               Download
             </Button>
             <Button variant="outline" onClick={handlePrint}>
-              <Print className="h-4 w-4 mr-2" />
+              <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
             <Button onClick={() => onOpenChange(false)}>
