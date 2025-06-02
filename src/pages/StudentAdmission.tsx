@@ -20,6 +20,28 @@ const StudentAdmission: React.FC = () => {
 
   const handleSubmitAdmission = async (studentData: Omit<Student, "id">) => {
     try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error getting user:', userError);
+        toast({
+          title: "Authentication Error",
+          description: "Please make sure you are logged in.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to add students.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Generate a unique student ID
       const studentId = `STU${Date.now()}`;
       
@@ -38,7 +60,7 @@ const StudentAdmission: React.FC = () => {
             parent_email: studentData.parentEmail,
             parent_phone: studentData.parentPhone,
             medical_details: studentData.medicalInfo || null,
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: user.id
           }
         ])
         .select()
@@ -48,7 +70,7 @@ const StudentAdmission: React.FC = () => {
         console.error('Error adding student:', error);
         toast({
           title: "Admission Failed",
-          description: "There was an error processing the student admission.",
+          description: `Database error: ${error.message}`,
           variant: "destructive",
         });
         return;
@@ -63,7 +85,7 @@ const StudentAdmission: React.FC = () => {
       console.error('Error adding student:', error);
       toast({
         title: "Admission Failed",
-        description: "There was an error processing the student admission.",
+        description: "There was an unexpected error processing the student admission.",
         variant: "destructive",
       });
     }
