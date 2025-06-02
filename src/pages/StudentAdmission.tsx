@@ -6,8 +6,8 @@ import { Navigate } from "react-router-dom";
 import { AdmissionForm } from "@/components/admission/AdmissionForm";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { dataService } from "@/services/mockData";
 import { Student } from "@/types/models";
+import { supabase } from "@/integrations/supabase/client";
 
 const StudentAdmission: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -18,16 +18,49 @@ const StudentAdmission: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleSubmitAdmission = (studentData: Omit<Student, "id">) => {
+  const handleSubmitAdmission = async (studentData: Omit<Student, "id">) => {
     try {
-      // Add student to the data service
-      const newStudent = dataService.addStudent(studentData);
+      // Generate a unique student ID
+      const studentId = `STU${Date.now()}`;
+      
+      // Insert student into Supabase
+      const { data, error } = await supabase
+        .from('students')
+        .insert([
+          {
+            student_id: studentId,
+            first_name: studentData.fullName.split(' ')[0],
+            last_name: studentData.fullName.split(' ').slice(1).join(' ') || '',
+            date_of_birth: studentData.dateOfBirth,
+            current_class: studentData.class,
+            admission_date: studentData.admissionDate,
+            parent_name: studentData.parentName,
+            parent_email: studentData.parentEmail,
+            parent_phone: studentData.parentPhone,
+            medical_details: studentData.medicalInfo || null,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding student:', error);
+        toast({
+          title: "Admission Failed",
+          description: "There was an error processing the student admission.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Student Admission Successful",
-        description: `${newStudent.fullName} has been successfully admitted with ID: ${newStudent.id}`,
+        description: `${studentData.fullName} has been successfully admitted with ID: ${studentId}`,
       });
       navigate("/students");
     } catch (error) {
+      console.error('Error adding student:', error);
       toast({
         title: "Admission Failed",
         description: "There was an error processing the student admission.",
