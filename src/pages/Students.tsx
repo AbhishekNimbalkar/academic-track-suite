@@ -32,6 +32,7 @@ const Students: React.FC = () => {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
   const [selectedClass, setSelectedClass] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -41,6 +42,9 @@ const Students: React.FC = () => {
   // Fetch students from Supabase
   const fetchStudents = async () => {
     try {
+      setIsLoading(true);
+      console.log('Fetching students from Supabase...');
+      
       const { data, error } = await supabase
         .from('students')
         .select('*')
@@ -56,10 +60,12 @@ const Students: React.FC = () => {
         return;
       }
 
+      console.log('Fetched students data:', data);
+
       // Convert Supabase data to Student format
       const formattedStudents: Student[] = data.map(student => ({
         id: student.student_id,
-        fullName: `${student.first_name} ${student.last_name}`,
+        fullName: `${student.first_name} ${student.last_name}`.trim(),
         dateOfBirth: student.date_of_birth,
         gender: "male", // Default value since not in Supabase schema
         bloodGroup: "A+", // Default value since not in Supabase schema
@@ -68,7 +74,7 @@ const Students: React.FC = () => {
         admissionDate: student.admission_date,
         admissionClass: student.current_class,
         parentName: student.parent_name,
-        parentEmail: student.parent_email,
+        parentEmail: student.parent_email || "",
         parentPhone: student.parent_phone,
         address: "", // Not in Supabase schema
         medicalInfo: student.medical_details || "",
@@ -78,6 +84,7 @@ const Students: React.FC = () => {
         panCardNumber: "", // Default value since not in Supabase schema
       }));
 
+      console.log('Formatted students:', formattedStudents);
       setStudents(formattedStudents);
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -86,6 +93,8 @@ const Students: React.FC = () => {
         description: "Failed to fetch students",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -133,6 +142,8 @@ const Students: React.FC = () => {
     if (!studentToDelete) return;
 
     try {
+      console.log('Deleting student:', studentToDelete.id);
+      
       const { error } = await supabase
         .from('students')
         .delete()
@@ -178,6 +189,19 @@ const Students: React.FC = () => {
   const handleAddStudentClick = () => {
     navigate("/student-admission");
   };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading students...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

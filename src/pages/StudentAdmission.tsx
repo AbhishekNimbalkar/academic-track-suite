@@ -36,38 +36,31 @@ const StudentAdmission: React.FC = () => {
       // Create a mock user ID since we're using mock auth
       const mockUserId = `mock_user_${user.email.replace('@', '_').replace('.', '_')}`;
       
-      console.log('Submitting student data:', {
+      // Parse full name into first and last names
+      const nameParts = studentData.fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      const studentRecord = {
         student_id: studentId,
-        first_name: studentData.fullName.split(' ')[0],
-        last_name: studentData.fullName.split(' ').slice(1).join(' ') || '',
+        first_name: firstName,
+        last_name: lastName,
         date_of_birth: studentData.dateOfBirth,
         current_class: studentData.class,
         admission_date: studentData.admissionDate,
         parent_name: studentData.parentName,
-        parent_email: studentData.parentEmail,
+        parent_email: studentData.parentEmail || null,
         parent_phone: studentData.parentPhone,
         medical_details: studentData.medicalInfo || null,
         created_by: mockUserId
-      });
+      };
+      
+      console.log('Submitting student data:', studentRecord);
       
       // Insert student into Supabase
       const { data, error } = await supabase
         .from('students')
-        .insert([
-          {
-            student_id: studentId,
-            first_name: studentData.fullName.split(' ')[0],
-            last_name: studentData.fullName.split(' ').slice(1).join(' ') || '',
-            date_of_birth: studentData.dateOfBirth,
-            current_class: studentData.class,
-            admission_date: studentData.admissionDate,
-            parent_name: studentData.parentName,
-            parent_email: studentData.parentEmail,
-            parent_phone: studentData.parentPhone,
-            medical_details: studentData.medicalInfo || null,
-            created_by: mockUserId
-          }
-        ])
+        .insert([studentRecord])
         .select()
         .single();
 
@@ -87,6 +80,8 @@ const StudentAdmission: React.FC = () => {
         title: "Student Admission Successful",
         description: `${studentData.fullName} has been successfully admitted with ID: ${studentId}`,
       });
+      
+      // Navigate to students page to see the newly added student
       navigate("/students");
     } catch (error) {
       console.error('Error adding student:', error);
