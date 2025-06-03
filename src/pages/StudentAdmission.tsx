@@ -10,7 +10,7 @@ import { Student } from "@/types/models";
 import { supabase } from "@/integrations/supabase/client";
 
 const StudentAdmission: React.FC = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Check if user has permission to access this page (Admin or Class Teacher)
@@ -20,20 +20,8 @@ const StudentAdmission: React.FC = () => {
 
   const handleSubmitAdmission = async (studentData: Omit<Student, "id">) => {
     try {
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('Error getting user:', userError);
-        toast({
-          title: "Authentication Error",
-          description: "Please make sure you are logged in.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!user) {
+      // Check if user is authenticated using the mock auth system
+      if (!isAuthenticated || !user) {
         toast({
           title: "Authentication Required",
           description: "Please log in to add students.",
@@ -44,6 +32,23 @@ const StudentAdmission: React.FC = () => {
 
       // Generate a unique student ID
       const studentId = `STU${Date.now()}`;
+      
+      // Create a mock user ID since we're using mock auth
+      const mockUserId = `mock_user_${user.email.replace('@', '_').replace('.', '_')}`;
+      
+      console.log('Submitting student data:', {
+        student_id: studentId,
+        first_name: studentData.fullName.split(' ')[0],
+        last_name: studentData.fullName.split(' ').slice(1).join(' ') || '',
+        date_of_birth: studentData.dateOfBirth,
+        current_class: studentData.class,
+        admission_date: studentData.admissionDate,
+        parent_name: studentData.parentName,
+        parent_email: studentData.parentEmail,
+        parent_phone: studentData.parentPhone,
+        medical_details: studentData.medicalInfo || null,
+        created_by: mockUserId
+      });
       
       // Insert student into Supabase
       const { data, error } = await supabase
@@ -60,7 +65,7 @@ const StudentAdmission: React.FC = () => {
             parent_email: studentData.parentEmail,
             parent_phone: studentData.parentPhone,
             medical_details: studentData.medicalInfo || null,
-            created_by: user.id
+            created_by: mockUserId
           }
         ])
         .select()
@@ -76,6 +81,8 @@ const StudentAdmission: React.FC = () => {
         return;
       }
 
+      console.log('Student successfully added:', data);
+      
       toast({
         title: "Student Admission Successful",
         description: `${studentData.fullName} has been successfully admitted with ID: ${studentId}`,
