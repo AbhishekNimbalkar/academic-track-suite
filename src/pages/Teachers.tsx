@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import {
@@ -169,18 +168,6 @@ const Teachers: React.FC = () => {
     }
 
     try {
-      // Create user account first with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newTeacher.email,
-        password: 'TempPassword123!', // Temporary password - teacher should change this
-        email_confirm: true,
-        user_metadata: {
-          role: 'teacher'
-        }
-      });
-
-      if (authError) throw authError;
-
       // Generate teacher ID
       const newTeacherId = `TCH${(teachers.length + 1).toString().padStart(3, "0")}`;
       
@@ -189,11 +176,10 @@ const Teachers: React.FC = () => {
       const firstName = nameParts[0];
       const lastName = nameParts.slice(1).join(' ') || '';
 
-      // Insert teacher record
+      // Insert teacher record directly without creating auth user first
       const { data: teacherData, error: teacherError } = await supabase
         .from('teachers')
         .insert({
-          auth_user_id: authData.user.id,
           teacher_id: newTeacherId,
           first_name: firstName,
           last_name: lastName,
@@ -215,7 +201,7 @@ const Teachers: React.FC = () => {
       setIsAddDialogOpen(false);
       toast({
         title: "Teacher Added",
-        description: `${newTeacher.name} has been successfully added. Login credentials: Email: ${newTeacher.email}, Password: TempPassword123!`,
+        description: `${newTeacher.name} has been successfully added. They can now use their email to request login access.`,
       });
       
       // Reset form
@@ -364,7 +350,7 @@ const Teachers: React.FC = () => {
           <CardHeader>
             <CardTitle>Teacher Records</CardTitle>
             <CardDescription>
-              Manage teachers, create their accounts, and assign classes
+              Manage teachers and assign classes. Teachers can request login access using their registered email.
             </CardDescription>
             <div className="flex items-center space-x-2 mt-4">
               <TeacherSearchBar 

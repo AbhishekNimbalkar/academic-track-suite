@@ -34,7 +34,7 @@ export const AddTeacherDialog: React.FC<AddTeacherDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add New Teacher</DialogTitle>
           <DialogDescription>
-            Enter the teacher's details below to create a new teacher record.
+            Enter the teacher's details. They can request login access later using their email.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -99,20 +99,6 @@ export const AddTeacherDialog: React.FC<AddTeacherDialogProps> = ({
                 })
               }
               placeholder="Mathematics, Physics"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="classes">Classes (comma separated)</Label>
-            <Input
-              id="classes"
-              value={newTeacher.classes.join(", ")}
-              onChange={(e) =>
-                setNewTeacher({
-                  ...newTeacher,
-                  classes: e.target.value.split(",").map((c) => c.trim()),
-                })
-              }
-              placeholder="9, 10"
             />
           </div>
           <div className="space-y-2">
