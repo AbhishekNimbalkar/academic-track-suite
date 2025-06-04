@@ -41,11 +41,6 @@ const Login: React.FC = () => {
     setPassword("admin123");
   };
 
-  const handleTeacherLogin = () => {
-    setEmail("teacher@school.com");
-    setPassword("teacher123");
-  };
-
   const handleStationaryLogin = () => {
     setEmail("stationary@school.com");
     setPassword("stationary123");
@@ -109,22 +104,14 @@ const Login: React.FC = () => {
               </Button>
               
               <div className="flex flex-col space-y-2 w-full">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     className="w-full"
                     onClick={handleAdminLogin}
                   >
-                    Admin Login
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleTeacherLogin}
-                  >
-                    Teacher Login
+                    Admin
                   </Button>
                   <Button
                     type="button"
@@ -132,7 +119,7 @@ const Login: React.FC = () => {
                     className="w-full"
                     onClick={handleStationaryLogin}
                   >
-                    Stationary Login
+                    Stationary
                   </Button>
                   <Button
                     type="button"
@@ -140,12 +127,12 @@ const Login: React.FC = () => {
                     className="w-full"
                     onClick={handleMedicalLogin}
                   >
-                    Medical Login
+                    Medical
                   </Button>
                 </div>
                 <div className="text-xs text-center text-muted-foreground space-y-1">
                   <p><strong>Admin:</strong> admin@school.com / admin123</p>
-                  <p><strong>Teacher:</strong> teacher@school.com / teacher123</p>
+                  <p><strong>Teachers:</strong> Use your registered email + any password (first login creates account)</p>
                   <p><strong>Stationary:</strong> stationary@school.com / stationary123</p>
                   <p><strong>Medical:</strong> medical@school.com / medical123</p>
                 </div>
@@ -156,7 +143,7 @@ const Login: React.FC = () => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Use the demo credentials above to access the IPS Education System.
+            Teachers: Use your registered email address. Your account will be created on first login.
           </p>
         </div>
       </div>

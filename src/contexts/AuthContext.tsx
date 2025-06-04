@@ -90,18 +90,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setSession(session);
         
         if (session?.user) {
-          // Get user role from user_profiles table
-          const { data: profileData, error } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', session.user.id)
+          // Check if user is a teacher
+          const { data: teacherData, error: teacherError } = await supabase
+            .from('teachers')
+            .select('teacher_id, email')
+            .eq('email', session.user.email)
             .single();
           
-          if (profileData) {
+          if (teacherData && !teacherError) {
+            // User is a teacher
             setUser({ email: session.user.email || '' });
-            setUserRole(profileData.role);
+            setUserRole('teacher');
           } else {
-            console.error('Error fetching user profile:', error);
             // Fallback to mock auth for existing users
             checkMockAuth();
           }
@@ -139,14 +139,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (email: string, password: string) => {
     try {
-      // First try Supabase auth for teachers
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // First check if this is a teacher trying to log in
+      const { data: teacherData, error: teacherError } = await supabase
+        .from('teachers')
+        .select('teacher_id, email')
+        .eq('email', email)
+        .single();
 
-      if (authData.user && !authError) {
-        // Supabase auth successful - user profile will be loaded by auth state listener
+      if (teacherData && !teacherError) {
+        // This is a teacher - check if they have a Supabase auth account
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) {
+          // Teacher doesn't have auth account yet - create one
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/dashboard`,
+              data: {
+                role: 'teacher'
+              }
+            }
+          });
+
+          if (signUpError) throw signUpError;
+
+          // Update teacher record with auth user id
+          if (signUpData.user) {
+            await supabase
+              .from('teachers')
+              .update({ auth_user_id: signUpData.user.id })
+              .eq('email', email);
+          }
+
+          toast({
+            title: "Account Created",
+            description: "Your teacher account has been created. Please check your email for verification (if required) and try logging in again.",
+          });
+          return;
+        }
+
+        // Teacher login successful
         toast({
           title: "Welcome back!",
           description: "You have been logged in successfully.",
