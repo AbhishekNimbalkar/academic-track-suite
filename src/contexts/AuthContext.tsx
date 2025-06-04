@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: { email: string } | null;
@@ -52,17 +54,12 @@ const ROLE_PERMISSIONS = {
   ],
 };
 
-// Mock users database with new roles
+// Mock users database (fallback for admin)
 const MOCK_USERS = {
   "admin@school.com": {
     password: "admin123",
     role: "admin",
     email: "admin@school.com"
-  },
-  "teacher@school.com": {
-    password: "teacher123", 
-    role: "teacher",
-    email: "teacher@school.com"
   },
   "stationary@school.com": {
     password: "stationary123",
@@ -82,10 +79,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session);
+        setSession(session);
+        
+        if (session?.user) {
+          // Get user role from user_profiles table
+          const { data: profileData, error } = await supabase
+            .from('user_profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileData) {
+            setUser({ email: session.user.email || '' });
+            setUserRole(profileData.role);
+          } else {
+            console.error('Error fetching user profile:', error);
+            // Fallback to mock auth for existing users
+            checkMockAuth();
+          }
+        } else {
+          setUser(null);
+          setUserRole(null);
+          // Check for mock auth fallback
+          checkMockAuth();
+        }
+        setIsLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        checkMockAuth();
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkMockAuth = () => {
+    // Check if user is already logged in with mock auth
     const savedUser = localStorage.getItem('currentUser');
     const savedRole = localStorage.getItem('currentUserRole');
     
@@ -93,12 +135,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(JSON.parse(savedUser));
       setUserRole(savedRole);
     }
-    
-    setIsLoading(false);
-  }, []);
+  };
 
   const login = async (email: string, password: string) => {
     try {
+      // First try Supabase auth for teachers
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authData.user && !authError) {
+        // Supabase auth successful - user profile will be loaded by auth state listener
+        toast({
+          title: "Welcome back!",
+          description: "You have been logged in successfully.",
+        });
+        return;
+      }
+
+      // Fallback to mock auth for admin and other roles
       const mockUser = MOCK_USERS[email as keyof typeof MOCK_USERS];
       
       if (!mockUser || mockUser.password !== password) {
@@ -119,9 +175,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         description: `You have been logged in as ${mockUser.role}.`,
       });
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Invalid credentials",
         variant: "destructive",
       });
       throw error;
@@ -130,8 +187,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
+      // Sign out from Supabase if authenticated there
+      if (session) {
+        await supabase.auth.signOut();
+      }
+      
       setUser(null);
       setUserRole(null);
+      setSession(null);
       
       // Clear localStorage
       localStorage.removeItem('currentUser');

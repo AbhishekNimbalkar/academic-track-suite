@@ -1,4 +1,3 @@
-
 export interface Student {
   id: string;
   fullName: string;
@@ -294,4 +293,20 @@ export interface PromotionRecord {
   toSection: string;
   promotionDate: string;
   academicYear: string;
+}
+
+export interface Class {
+  id: string;
+  className: string;
+  medium: string;
+  academicYear: string;
+}
+
+export interface TeacherClassAssignment {
+  id: string;
+  teacherId: string;
+  classId: string;
+  subject?: string;
+  assignedAt: string;
+  assignedBy?: string;
 }

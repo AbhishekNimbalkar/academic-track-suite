@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,6 +27,7 @@ import StudentPromotion from "./pages/StudentPromotion";
 import MyClasses from "./pages/MyClasses";
 import Applications from "./pages/Applications";
 import NotFound from "./pages/NotFound";
+import Classes from "./pages/Classes";
 
 const queryClient = new QueryClient();
 
@@ -244,6 +244,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Applications />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/classes" 
+                element={
+                  <ProtectedRoute>
+                    <Classes />
                   </ProtectedRoute>
                 } 
               />

@@ -9,13 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, UserCheck } from "lucide-react";
 import { TeacherList } from "@/components/teachers/TeacherList";
 import { AddTeacherDialog } from "@/components/teachers/AddTeacherDialog";
 import { DeleteTeacherDialog } from "@/components/teachers/DeleteTeacherDialog";
+import { AssignClassDialog } from "@/components/teachers/AssignClassDialog";
 import { TeacherSearchBar } from "@/components/teachers/TeacherSearchBar";
-import { Teacher } from "@/types/models";
+import { Teacher, Class, TeacherClassAssignment } from "@/types/models";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,10 +25,14 @@ const Teachers: React.FC = () => {
   const canManageTeachers = hasPermission("manage_teachers");
   
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [assignments, setAssignments] = useState<TeacherClassAssignment[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
+  const [teacherToAssign, setTeacherToAssign] = useState<Teacher | null>(null);
   const [newTeacher, setNewTeacher] = useState<Omit<Teacher, "id">>({
     name: "",
     email: "",
@@ -64,7 +69,7 @@ const Teachers: React.FC = () => {
         email: teacher.email,
         phone: teacher.phone || "",
         subjects: teacher.subjects || [],
-        classes: teacher.classes || [],
+        classes: [], // Will be populated from assignments
         joiningDate: teacher.joining_date,
         qualification: teacher.qualification || "",
         address: teacher.address || "",
@@ -81,8 +86,68 @@ const Teachers: React.FC = () => {
     }
   };
 
+  // Fetch classes from Supabase
+  const fetchClasses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching classes:', error);
+        return;
+      }
+
+      const formattedClasses: Class[] = data.map(cls => ({
+        id: cls.id,
+        className: cls.class_name,
+        medium: cls.medium,
+        academicYear: cls.academic_year,
+      }));
+
+      setClasses(formattedClasses);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
+
+  // Fetch teacher class assignments
+  const fetchAssignments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('teacher_class_assignments')
+        .select(`
+          *,
+          classes (
+            class_name,
+            medium
+          )
+        `);
+      
+      if (error) {
+        console.error('Error fetching assignments:', error);
+        return;
+      }
+
+      const formattedAssignments: TeacherClassAssignment[] = data.map(assignment => ({
+        id: assignment.id,
+        teacherId: assignment.teacher_id,
+        classId: assignment.class_id,
+        subject: assignment.subject,
+        assignedAt: assignment.assigned_at,
+        assignedBy: assignment.assigned_by,
+      }));
+
+      setAssignments(formattedAssignments);
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+    }
+  };
+
   useEffect(() => {
     fetchTeachers();
+    fetchClasses();
+    fetchAssignments();
   }, []);
 
   const filteredTeachers = teachers.filter((teacher) =>
@@ -90,9 +155,6 @@ const Teachers: React.FC = () => {
     teacher.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     teacher.subjects.some(subject => 
       subject.toLowerCase().includes(searchQuery.toLowerCase())
-    ) ||
-    teacher.classes.some(cls => 
-      cls.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
@@ -107,7 +169,7 @@ const Teachers: React.FC = () => {
     }
 
     try {
-      // Create user account first
+      // Create user account first with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: newTeacher.email,
         password: 'TempPassword123!', // Temporary password - teacher should change this
@@ -131,14 +193,13 @@ const Teachers: React.FC = () => {
       const { data: teacherData, error: teacherError } = await supabase
         .from('teachers')
         .insert({
-          user_id: authData.user.id,
+          auth_user_id: authData.user.id,
           teacher_id: newTeacherId,
           first_name: firstName,
           last_name: lastName,
           email: newTeacher.email,
           phone: newTeacher.phone,
           subjects: newTeacher.subjects,
-          classes: newTeacher.classes,
           joining_date: newTeacher.joiningDate,
           qualification: newTeacher.qualification,
           address: newTeacher.address,
@@ -154,7 +215,7 @@ const Teachers: React.FC = () => {
       setIsAddDialogOpen(false);
       toast({
         title: "Teacher Added",
-        description: `${newTeacher.name} has been successfully added. Temporary password: TempPassword123!`,
+        description: `${newTeacher.name} has been successfully added. Login credentials: Email: ${newTeacher.email}, Password: TempPassword123!`,
       });
       
       // Reset form
@@ -182,6 +243,13 @@ const Teachers: React.FC = () => {
     if (!teacherToDelete || !canManageTeachers) return;
 
     try {
+      // Delete teacher assignments first
+      await supabase
+        .from('teacher_class_assignments')
+        .delete()
+        .eq('teacher_id', teacherToDelete.id);
+
+      // Delete teacher record
       const { error } = await supabase
         .from('teachers')
         .delete()
@@ -208,6 +276,49 @@ const Teachers: React.FC = () => {
     }
   };
 
+  const handleAssignClass = async (classIds: string[], subject: string) => {
+    if (!teacherToAssign || !canManageTeachers) return;
+
+    try {
+      // Remove existing assignments for this teacher
+      await supabase
+        .from('teacher_class_assignments')
+        .delete()
+        .eq('teacher_id', teacherToAssign.id);
+
+      // Add new assignments
+      const assignmentData = classIds.map(classId => ({
+        teacher_id: teacherToAssign.id,
+        class_id: classId,
+        subject: subject,
+      }));
+
+      const { error } = await supabase
+        .from('teacher_class_assignments')
+        .insert(assignmentData);
+
+      if (error) throw error;
+
+      // Refresh assignments
+      await fetchAssignments();
+      
+      setIsAssignDialogOpen(false);
+      setTeacherToAssign(null);
+      
+      toast({
+        title: "Classes Assigned",
+        description: `Classes have been successfully assigned to ${teacherToAssign.name}.`,
+      });
+    } catch (error: any) {
+      console.error('Error assigning classes:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to assign classes",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleInitiateDelete = (teacher: Teacher) => {
     if (!canManageTeachers) {
       toast({
@@ -221,16 +332,31 @@ const Teachers: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleInitiateAssign = (teacher: Teacher) => {
+    if (!canManageTeachers) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to assign classes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setTeacherToAssign(teacher);
+    setIsAssignDialogOpen(true);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold tracking-tight">Teachers</h1>
           {canManageTeachers && (
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Teacher
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Teacher
+              </Button>
+            </div>
           )}
         </div>
 
@@ -238,7 +364,7 @@ const Teachers: React.FC = () => {
           <CardHeader>
             <CardTitle>Teacher Records</CardTitle>
             <CardDescription>
-              Manage and view all teachers in the system
+              Manage teachers, create their accounts, and assign classes
             </CardDescription>
             <div className="flex items-center space-x-2 mt-4">
               <TeacherSearchBar 
@@ -250,7 +376,10 @@ const Teachers: React.FC = () => {
           <CardContent>
             <TeacherList 
               teachers={filteredTeachers} 
-              onDeleteTeacher={handleInitiateDelete} 
+              onDeleteTeacher={handleInitiateDelete}
+              onAssignClass={handleInitiateAssign}
+              assignments={assignments}
+              classes={classes}
             />
           </CardContent>
         </Card>
@@ -269,6 +398,14 @@ const Teachers: React.FC = () => {
         onOpenChange={setIsDeleteDialogOpen}
         teacherToDelete={teacherToDelete}
         onDeleteTeacher={handleDeleteTeacher}
+      />
+
+      <AssignClassDialog
+        isOpen={isAssignDialogOpen}
+        onOpenChange={setIsAssignDialogOpen}
+        teacher={teacherToAssign}
+        classes={classes}
+        onAssignClass={handleAssignClass}
       />
     </MainLayout>
   );
