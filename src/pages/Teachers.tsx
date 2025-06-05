@@ -263,14 +263,31 @@ const Teachers: React.FC = () => {
   };
 
   const handleAssignClass = async (classIds: string[], subject: string) => {
-    if (!teacherToAssign || !canManageTeachers) return;
+    console.log('handleAssignClass called with:', { classIds, subject, teacherToAssign });
+    
+    if (!teacherToAssign || !canManageTeachers) {
+      console.log('Permission or teacher check failed');
+      toast({
+        title: "Error", 
+        description: "No teacher selected or insufficient permissions",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      console.log('Starting assignment process...');
+      
       // Remove existing assignments for this teacher
-      await supabase
+      const { error: deleteError } = await supabase
         .from('teacher_class_assignments')
         .delete()
         .eq('teacher_id', teacherToAssign.id);
+
+      if (deleteError) {
+        console.error('Error deleting existing assignments:', deleteError);
+        throw deleteError;
+      }
 
       // Add new assignments
       const assignmentData = classIds.map(classId => ({
@@ -279,27 +296,37 @@ const Teachers: React.FC = () => {
         subject: subject,
       }));
 
-      const { error } = await supabase
-        .from('teacher_class_assignments')
-        .insert(assignmentData);
+      console.log('Inserting new assignments:', assignmentData);
 
-      if (error) throw error;
+      const { error: insertError, data } = await supabase
+        .from('teacher_class_assignments')
+        .insert(assignmentData)
+        .select();
+
+      if (insertError) {
+        console.error('Error inserting assignments:', insertError);
+        throw insertError;
+      }
+
+      console.log('Successfully inserted assignments:', data);
 
       // Refresh assignments
       await fetchAssignments();
       
+      // Close dialog and reset state
       setIsAssignDialogOpen(false);
       setTeacherToAssign(null);
       
       toast({
         title: "Classes Assigned",
-        description: `Classes have been successfully assigned to ${teacherToAssign.name}.`,
+        description: `Successfully assigned ${classIds.length} classes to ${teacherToAssign.name} for ${subject}.`,
       });
+      
     } catch (error: any) {
-      console.error('Error assigning classes:', error);
+      console.error('Error in handleAssignClass:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to assign classes",
+        description: error.message || "Failed to assign classes. Please try again.",
         variant: "destructive",
       });
     }
@@ -317,10 +344,9 @@ const Teachers: React.FC = () => {
       return;
     }
     
-    console.log('Setting teacher to assign:', teacher);
+    console.log('Setting teacher to assign and opening dialog');
     setTeacherToAssign(teacher);
     setIsAssignDialogOpen(true);
-    console.log('Dialog should be open now');
   };
 
   const handleInitiateDelete = (teacher: Teacher) => {
@@ -393,7 +419,13 @@ const Teachers: React.FC = () => {
 
       <AssignClassDialog
         isOpen={isAssignDialogOpen}
-        onOpenChange={setIsAssignDialogOpen}
+        onOpenChange={(open) => {
+          console.log('Dialog open change:', open);
+          setIsAssignDialogOpen(open);
+          if (!open) {
+            setTeacherToAssign(null);
+          }
+        }}
         teacher={teacherToAssign}
         classes={classes}
         onAssignClass={handleAssignClass}
