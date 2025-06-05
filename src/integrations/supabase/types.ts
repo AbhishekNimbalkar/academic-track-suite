@@ -186,6 +186,7 @@ export type Database = {
           parent_email: string
           parent_name: string
           parent_phone: string
+          residential_type: string | null
           student_id: string
         }
         Insert: {
@@ -201,6 +202,7 @@ export type Database = {
           parent_email: string
           parent_name: string
           parent_phone: string
+          residential_type?: string | null
           student_id: string
         }
         Update: {
@@ -216,6 +218,7 @@ export type Database = {
           parent_email?: string
           parent_name?: string
           parent_phone?: string
+          residential_type?: string | null
           student_id?: string
         }
         Relationships: []

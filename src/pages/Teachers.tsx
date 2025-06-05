@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, UserCheck } from "lucide-react";
+import { Plus } from "lucide-react";
 import { TeacherList } from "@/components/teachers/TeacherList";
 import { AddTeacherDialog } from "@/components/teachers/AddTeacherDialog";
 import { DeleteTeacherDialog } from "@/components/teachers/DeleteTeacherDialog";
@@ -305,6 +305,24 @@ const Teachers: React.FC = () => {
     }
   };
 
+  const handleInitiateAssign = (teacher: Teacher) => {
+    console.log('Initiating assign for teacher:', teacher);
+    
+    if (!canManageTeachers) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to assign classes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('Setting teacher to assign:', teacher);
+    setTeacherToAssign(teacher);
+    setIsAssignDialogOpen(true);
+    console.log('Dialog should be open now');
+  };
+
   const handleInitiateDelete = (teacher: Teacher) => {
     if (!canManageTeachers) {
       toast({
@@ -316,19 +334,6 @@ const Teachers: React.FC = () => {
     }
     setTeacherToDelete(teacher);
     setIsDeleteDialogOpen(true);
-  };
-
-  const handleInitiateAssign = (teacher: Teacher) => {
-    if (!canManageTeachers) {
-      toast({
-        title: "Permission Denied",
-        description: "You don't have permission to assign classes.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setTeacherToAssign(teacher);
-    setIsAssignDialogOpen(true);
   };
 
   return (
