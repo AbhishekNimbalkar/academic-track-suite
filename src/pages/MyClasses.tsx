@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -48,6 +49,25 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+
+interface TeacherAssignment {
+  id: string;
+  class_id: string;
+  subject: string;
+  class?: {
+    class_name: string;
+    medium: string;
+  };
+}
+
+interface AssignedStudent {
+  id: string;
+  student_id: string;
+  first_name: string;
+  last_name: string;
+  current_class: string;
+}
 
 interface ClassSection {
   id: string;
@@ -66,102 +86,144 @@ const MyClasses: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState<ClassSection | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<string>("ongoing");
   const [isAddMarksheetOpen, setIsAddMarksheetOpen] = useState(false);
+  
+  const [teacherAssignments, setTeacherAssignments] = useState<TeacherAssignment[]>([]);
+  const [assignedStudents, setAssignedStudents] = useState<AssignedStudent[]>([]);
+  const [classes, setClasses] = useState<ClassSection[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [classes, setClasses] = useState<ClassSection[]>([
-    {
-      id: "CLS001",
-      class: "9",
-      section: "A",
-      subject: "Mathematics",
-      students: 35,
-      averageAttendance: 92,
-      averageMarks: 76,
-      lastClassDate: "2023-11-08"
-    },
-    {
-      id: "CLS002",
-      class: "10",
-      section: "B",
-      subject: "Mathematics",
-      students: 32,
-      averageAttendance: 89,
-      averageMarks: 72,
-      lastClassDate: "2023-11-09"
-    },
-    {
-      id: "CLS003",
-      class: "9",
-      section: "B",
-      subject: "Physics",
-      students: 33,
-      averageAttendance: 94,
-      averageMarks: 81,
-      lastClassDate: "2023-11-10"
-    },
-    {
-      id: "CLS004",
-      class: "10",
-      section: "A",
-      subject: "Physics",
-      students: 34,
-      averageAttendance: 91,
-      averageMarks: 78,
-      lastClassDate: "2023-11-07"
-    }
-  ]);
+  // Fetch teacher's assignments
+  const fetchTeacherAssignments = async () => {
+    if (!user?.email) return;
 
-  const [students, setStudents] = useState([
-    {
-      id: "STU001",
-      name: "Aarav Kumar",
-      class: "9",
-      section: "A",
-      attendance: 95,
-      marks: {
-        Mathematics: 88,
-        Physics: 76,
-        Chemistry: 82
+    try {
+      console.log('Fetching assignments for teacher:', user.email);
+      
+      // First get the teacher's ID
+      const { data: teacherData, error: teacherError } = await supabase
+        .from('teachers')
+        .select('teacher_id')
+        .eq('email', user.email)
+        .single();
+
+      if (teacherError || !teacherData) {
+        console.error('Error fetching teacher data:', teacherError);
+        return;
       }
-    },
-    {
-      id: "STU002",
-      name: "Diya Patel",
-      class: "9",
-      section: "A",
-      attendance: 92,
-      marks: {
-        Mathematics: 92,
-        Physics: 85,
-        Chemistry: 79
+
+      console.log('Teacher data:', teacherData);
+
+      // Get teacher's class assignments
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from('teacher_class_assignments')
+        .select(`
+          *,
+          classes (
+            class_name,
+            medium
+          )
+        `)
+        .eq('teacher_id', teacherData.teacher_id);
+
+      if (assignmentsError) {
+        console.error('Error fetching assignments:', assignmentsError);
+        return;
       }
-    },
-    {
-      id: "STU003",
-      name: "Vihaan Sharma",
-      class: "9",
-      section: "A",
-      attendance: 89,
-      marks: {
-        Mathematics: 65,
-        Physics: 72,
-        Chemistry: 68
-      }
-    },
-    {
-      id: "STU004",
-      name: "Ananya Singh",
-      class: "9",
-      section: "A",
-      attendance: 97,
-      marks: {
-        Mathematics: 95,
-        Physics: 88,
-        Chemistry: 91
-      }
+
+      console.log('Teacher assignments:', assignments);
+      setTeacherAssignments(assignments || []);
+
+    } catch (error) {
+      console.error('Error in fetchTeacherAssignments:', error);
     }
-  ]);
+  };
+
+  // Fetch students from assigned classes
+  const fetchAssignedStudents = async () => {
+    if (teacherAssignments.length === 0) return;
+
+    try {
+      const classIds = teacherAssignments.map(assignment => assignment.class_id);
+      console.log('Fetching students for class IDs:', classIds);
+
+      // Get class names first
+      const { data: classData, error: classError } = await supabase
+        .from('classes')
+        .select('id, class_name')
+        .in('id', classIds);
+
+      if (classError) {
+        console.error('Error fetching class data:', classError);
+        return;
+      }
+
+      const classNameMap = classData?.reduce((acc, cls) => {
+        acc[cls.id] = cls.class_name;
+        return acc;
+      }, {} as Record<string, string>) || {};
+
+      // Get students for those classes
+      const classNames = Object.values(classNameMap);
+      console.log('Fetching students for classes:', classNames);
+
+      const { data: students, error: studentsError } = await supabase
+        .from('students')
+        .select('*')
+        .in('current_class', classNames);
+
+      if (studentsError) {
+        console.error('Error fetching students:', studentsError);
+        return;
+      }
+
+      console.log('Fetched students:', students);
+      setAssignedStudents(students || []);
+
+    } catch (error) {
+      console.error('Error in fetchAssignedStudents:', error);
+    }
+  };
+
+  // Convert assignments to class sections format
+  const processClassSections = () => {
+    const classSections: ClassSection[] = teacherAssignments.map(assignment => {
+      const className = assignment.class?.class_name || 'Unknown';
+      const studentsInClass = assignedStudents.filter(student => 
+        student.current_class === className
+      );
+
+      return {
+        id: assignment.id,
+        class: className,
+        section: assignment.class?.medium || 'A',
+        subject: assignment.subject || 'Unknown',
+        students: studentsInClass.length,
+        averageAttendance: 92, // Mock data - you can implement actual calculation
+        averageMarks: 76, // Mock data - you can implement actual calculation
+        lastClassDate: "2023-11-08" // Mock data - you can implement actual calculation
+      };
+    });
+
+    setClasses(classSections);
+  };
+
+  useEffect(() => {
+    fetchTeacherAssignments();
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (teacherAssignments.length > 0) {
+      fetchAssignedStudents();
+    }
+  }, [teacherAssignments]);
+
+  useEffect(() => {
+    if (teacherAssignments.length > 0 && assignedStudents.length >= 0) {
+      processClassSections();
+      setIsLoading(false);
+    }
+  }, [teacherAssignments, assignedStudents]);
 
   const filteredClasses = classes.filter(cls => {
     const matchesSearch = 
@@ -171,10 +233,9 @@ const MyClasses: React.FC = () => {
     return matchesSearch;
   });
 
-  const filteredStudents = students.filter(student => 
+  const filteredStudents = assignedStudents.filter(student => 
     selectedClass && 
-    student.class === selectedClass.class && 
-    student.section === selectedClass.section
+    student.current_class === selectedClass.class
   );
 
   const handleAddAttendance = () => {
@@ -196,6 +257,19 @@ const MyClasses: React.FC = () => {
     });
     // In a real app, this would generate a PDF report
   };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading your assigned classes...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -224,22 +298,30 @@ const MyClasses: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Class & Section</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Students</TableHead>
-                      <TableHead>Avg. Attendance</TableHead>
-                      <TableHead>Avg. Marks</TableHead>
-                      <TableHead>Last Class</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClasses.length > 0 ? (
-                      filteredClasses.map((cls) => (
+              {filteredClasses.length === 0 ? (
+                <div className="text-center py-8">
+                  <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Classes Assigned</h3>
+                  <p className="text-muted-foreground">
+                    You don't have any classes assigned to you yet. Please contact the administrator.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Class & Section</TableHead>
+                        <TableHead>Subject</TableHead>
+                        <TableHead>Students</TableHead>
+                        <TableHead>Avg. Attendance</TableHead>
+                        <TableHead>Avg. Marks</TableHead>
+                        <TableHead>Last Class</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredClasses.map((cls) => (
                         <TableRow key={cls.id}>
                           <TableCell className="font-medium">
                             Class {cls.class} {cls.section}
@@ -301,17 +383,11 @@ const MyClasses: React.FC = () => {
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          No classes found. Try adjusting your search.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -324,26 +400,26 @@ const MyClasses: React.FC = () => {
             <CardContent>
               <div className="flex items-center">
                 <Users className="h-10 w-10 text-primary" />
-                <span className="text-3xl font-bold ml-4">134</span>
+                <span className="text-3xl font-bold ml-4">{assignedStudents.length}</span>
               </div>
             </CardContent>
             <CardFooter className="pt-0 text-sm text-muted-foreground">
-              Across all assigned classes
+              Across {classes.length} assigned classes
             </CardFooter>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Upcoming Exams</CardTitle>
+              <CardTitle className="text-lg">Assigned Classes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center">
-                <ClipboardCheck className="h-10 w-10 text-primary" />
-                <span className="text-3xl font-bold ml-4">3</span>
+                <BookOpen className="h-10 w-10 text-primary" />
+                <span className="text-3xl font-bold ml-4">{classes.length}</span>
               </div>
             </CardContent>
             <CardFooter className="pt-0 text-sm text-muted-foreground">
-              Within the next 2 weeks
+              Classes assigned to you
             </CardFooter>
           </Card>
           
@@ -353,7 +429,7 @@ const MyClasses: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center">
-                <BookOpen className="h-10 w-10 text-primary" />
+                <ClipboardCheck className="h-10 w-10 text-primary" />
                 <span className="text-3xl font-bold ml-4">7</span>
               </div>
             </CardContent>
@@ -367,7 +443,7 @@ const MyClasses: React.FC = () => {
           <CardHeader>
             <CardTitle>Recent Performance</CardTitle>
             <CardDescription>
-              Average marks in recent tests across your classes
+              Average marks in recent tests across your assigned classes
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -377,7 +453,7 @@ const MyClasses: React.FC = () => {
                 <div className="space-y-2">
                   <p className="text-lg">Performance charts will appear here</p>
                   <p className="text-sm text-muted-foreground">
-                    Track student progress and identify areas for improvement
+                    Track student progress across your {classes.length} assigned classes
                   </p>
                 </div>
               </div>
@@ -393,7 +469,7 @@ const MyClasses: React.FC = () => {
               Class {selectedClass?.class} {selectedClass?.section} - {selectedClass?.subject}
             </DialogTitle>
             <DialogDescription>
-              View and manage students in this class
+              View and manage students in this assigned class
             </DialogDescription>
           </DialogHeader>
           
@@ -408,46 +484,36 @@ const MyClasses: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
+                      <TableHead>Student ID</TableHead>
                       <TableHead>Name</TableHead>
-                      <TableHead>Attendance</TableHead>
-                      <TableHead>Subject Marks</TableHead>
+                      <TableHead>Class</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStudents.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell>{student.id}</TableCell>
-                        <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            student.attendance >= 90 ? "bg-green-100 text-green-800" :
-                            student.attendance >= 75 ? "bg-yellow-100 text-yellow-800" :
-                            "bg-red-100 text-red-800"
-                          }`}>
-                            {student.attendance}%
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {selectedClass && (
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              student.marks[selectedClass.subject as keyof typeof student.marks] >= 80 ? "bg-green-100 text-green-800" :
-                              student.marks[selectedClass.subject as keyof typeof student.marks] >= 60 ? "bg-yellow-100 text-yellow-800" :
-                              "bg-red-100 text-red-800"
-                            }`}>
-                              {student.marks[selectedClass.subject as keyof typeof student.marks]}%
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
-                            <FileText className="h-4 w-4" />
-                            <span className="sr-only">View Details</span>
-                          </Button>
+                    {filteredStudents.length > 0 ? (
+                      filteredStudents.map((student) => (
+                        <TableRow key={student.id}>
+                          <TableCell>{student.student_id}</TableCell>
+                          <TableCell className="font-medium">
+                            {student.first_name} {student.last_name}
+                          </TableCell>
+                          <TableCell>Class {student.current_class}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <FileText className="h-4 w-4" />
+                              <span className="sr-only">View Details</span>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-4">
+                          No students found for this class
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -462,7 +528,7 @@ const MyClasses: React.FC = () => {
                   </Button>
                 </div>
                 <p className="text-muted-foreground">
-                  Attendance data for the last 30 days would be displayed here.
+                  Attendance data for your assigned class would be displayed here.
                 </p>
                 <div className="h-[200px] flex items-center justify-center border rounded-md">
                   <div className="text-center">
@@ -479,7 +545,7 @@ const MyClasses: React.FC = () => {
                   <Button size="sm">Generate Report</Button>
                 </div>
                 <p className="text-muted-foreground">
-                  Performance metrics and analytics would be displayed here.
+                  Performance metrics for your assigned class would be displayed here.
                 </p>
                 <div className="h-[200px] flex items-center justify-center border rounded-md">
                   <div className="text-center">
@@ -535,7 +601,7 @@ const MyClasses: React.FC = () => {
                   <TableBody>
                     {filteredStudents.map((student) => (
                       <TableRow key={student.id}>
-                        <TableCell>{student.name}</TableCell>
+                        <TableCell>{student.first_name} {student.last_name}</TableCell>
                         <TableCell>
                           <Input type="number" placeholder="Enter marks" />
                         </TableCell>
