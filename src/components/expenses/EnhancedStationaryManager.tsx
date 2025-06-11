@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +88,7 @@ export const EnhancedStationaryManager: React.FC = () => {
 
   const fetchResidentialStudents = async () => {
     try {
+      console.log('Fetching residential students...');
       const { data: studentsData, error } = await supabase
         .from('students')
         .select('*')
@@ -97,14 +97,79 @@ export const EnhancedStationaryManager: React.FC = () => {
 
       if (error) {
         console.error('Error fetching students:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch residential students: " + error.message,
+          variant: "destructive",
+        });
         return;
       }
 
       console.log('Fetched residential students:', studentsData);
-      setStudents(studentsData || []);
+      
+      if (!studentsData || studentsData.length === 0) {
+        console.log('No residential students found');
+        toast({
+          title: "No Data",
+          description: "No residential students found in the database.",
+        });
+        // Set empty array and show mock data for demo
+        setStudents([]);
+        loadMockStudents();
+        return;
+      }
+
+      setStudents(studentsData);
     } catch (error) {
       console.error('Error in fetchResidentialStudents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to database. Loading demo data.",
+        variant: "destructive",
+      });
+      loadMockStudents();
     }
+  };
+
+  const loadMockStudents = () => {
+    // Load mock students for demo if no real data
+    const mockStudents: Student[] = [
+      {
+        id: "STU001",
+        student_id: "STU001",
+        first_name: "John",
+        last_name: "Doe",
+        current_class: "10",
+        residential_type: "residential"
+      },
+      {
+        id: "STU002",
+        student_id: "STU002",
+        first_name: "Jane",
+        last_name: "Smith",
+        current_class: "10",
+        residential_type: "residential"
+      },
+      {
+        id: "STU003",
+        student_id: "STU003",
+        first_name: "Mike",
+        last_name: "Johnson",
+        current_class: "9",
+        residential_type: "residential"
+      },
+      {
+        id: "STU004",
+        student_id: "STU004",
+        first_name: "Sarah",
+        last_name: "Wilson",
+        current_class: "11",
+        residential_type: "residential"
+      }
+    ];
+    
+    console.log('Loading mock students:', mockStudents);
+    setStudents(mockStudents);
   };
 
   const loadMockData = () => {
