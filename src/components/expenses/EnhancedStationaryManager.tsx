@@ -11,14 +11,61 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, Package, Download, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { dataService } from "@/services/mockData";
-import { Student, StationaryExpense, CommonExpense, ExpenseFund } from "@/types/models";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Student {
+  id: string;
+  student_id: string;
+  first_name: string;
+  last_name: string;
+  current_class: string;
+  residential_type: string;
+}
+
+interface StationaryExpense {
+  id: string;
+  studentId: string;
+  studentName: string;
+  date: string;
+  amount: number;
+  description: string;
+  academicYear: string;
+  class: string;
+  section: string;
+  type: "individual";
+}
+
+interface CommonExpense {
+  id: string;
+  date: string;
+  description: string;
+  totalAmount: number;
+  category: "stationary";
+  class: string;
+  section: string;
+  academicYear: string;
+  studentsAffected: string[];
+  amountPerStudent: number;
+  addedBy: string;
+}
+
+interface ExpenseFund {
+  studentId: string;
+  studentName: string;
+  class: string;
+  section: string;
+  academicYear: string;
+  initialAmount: number;
+  totalExpenses: number;
+  remainingBalance: number;
+  isNegative: boolean;
+  negativeAmount?: number;
+}
 
 export const EnhancedStationaryManager: React.FC = () => {
   const { toast } = useToast();
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedClass, setSelectedClass] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
   const [expenses, setExpenses] = useState<StationaryExpense[]>([]);
   const [commonExpenses, setCommonExpenses] = useState<CommonExpense[]>([]);
   const [funds, setFunds] = useState<ExpenseFund[]>([]);
@@ -36,10 +83,29 @@ export const EnhancedStationaryManager: React.FC = () => {
   const [commonDescription, setCommonDescription] = useState("");
 
   useEffect(() => {
-    const studentData = dataService.getStudents().filter(s => s.residentialType === "residential");
-    setStudents(studentData);
+    fetchResidentialStudents();
     loadMockData();
   }, []);
+
+  const fetchResidentialStudents = async () => {
+    try {
+      const { data: studentsData, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('residential_type', 'residential')
+        .order('current_class', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching students:', error);
+        return;
+      }
+
+      console.log('Fetched residential students:', studentsData);
+      setStudents(studentsData || []);
+    } catch (error) {
+      console.error('Error in fetchResidentialStudents:', error);
+    }
+  };
 
   const loadMockData = () => {
     // Mock expense fund data
@@ -107,21 +173,33 @@ export const EnhancedStationaryManager: React.FC = () => {
   };
 
   const getClassOptions = () => {
-    const classes = [...new Set(students.map(s => s.class))].sort();
-    return classes;
-  };
-
-  const getSectionOptions = (selectedClass: string) => {
-    const sections = [...new Set(students.filter(s => s.class === selectedClass).map(s => s.section))].sort();
-    return sections;
+    // Generate classes 1-12
+    return Array.from({ length: 12 }, (_, i) => (i + 1).toString());
   };
 
   const getFilteredStudents = () => {
     return students.filter(s => 
-      (!selectedClass || s.class === selectedClass) &&
-      (!selectedSection || s.section === selectedSection) &&
-      s.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+      (!selectedClass || s.current_class === selectedClass) &&
+      (s.first_name + ' ' + s.last_name).toLowerCase().includes(searchQuery.toLowerCase())
     );
+  };
+
+  const getStudentsByClass = () => {
+    const studentsByClass: { [key: string]: Student[] } = {};
+    
+    // Initialize all classes 1-12
+    for (let i = 1; i <= 12; i++) {
+      studentsByClass[i.toString()] = [];
+    }
+    
+    // Group students by class
+    students.forEach(student => {
+      if (studentsByClass[student.current_class]) {
+        studentsByClass[student.current_class].push(student);
+      }
+    });
+    
+    return studentsByClass;
   };
 
   const getStudentFund = (studentId: string) => {
@@ -142,10 +220,10 @@ export const EnhancedStationaryManager: React.FC = () => {
     const student = students.find(s => s.id === selectedStudent);
     const fund = getStudentFund(selectedStudent);
 
-    if (!student || !fund) {
+    if (!student) {
       toast({
         title: "Error",
-        description: "Student or fund information not found.",
+        description: "Student information not found.",
         variant: "destructive",
       });
       return;
@@ -154,32 +232,34 @@ export const EnhancedStationaryManager: React.FC = () => {
     const newExpense: StationaryExpense = {
       id: `SE${Date.now()}`,
       studentId: selectedStudent,
-      studentName: student.fullName,
+      studentName: `${student.first_name} ${student.last_name}`,
       date: new Date().toISOString().split("T")[0],
       amount,
       description: individualDescription,
       academicYear: "2024-25",
-      class: student.class,
-      section: student.section,
+      class: student.current_class,
+      section: "A",
       type: "individual"
     };
 
     setExpenses([...expenses, newExpense]);
 
-    // Update fund
-    const updatedFund = {
-      ...fund,
-      totalExpenses: fund.totalExpenses + amount,
-      remainingBalance: fund.remainingBalance - amount,
-      isNegative: fund.remainingBalance - amount < 0,
-      negativeAmount: fund.remainingBalance - amount < 0 ? Math.abs(fund.remainingBalance - amount) : undefined
-    };
+    // Update fund if exists
+    if (fund) {
+      const updatedFund = {
+        ...fund,
+        totalExpenses: fund.totalExpenses + amount,
+        remainingBalance: fund.remainingBalance - amount,
+        isNegative: fund.remainingBalance - amount < 0,
+        negativeAmount: fund.remainingBalance - amount < 0 ? Math.abs(fund.remainingBalance - amount) : undefined
+      };
 
-    setFunds(funds.map(f => f.studentId === selectedStudent ? updatedFund : f));
+      setFunds(funds.map(f => f.studentId === selectedStudent ? updatedFund : f));
+    }
 
     toast({
       title: "Individual Expense Added",
-      description: `₹${amount} stationary expense recorded for ${student.fullName}.`,
+      description: `₹${amount} stationary expense recorded for ${student.first_name} ${student.last_name}.`,
     });
 
     // Reset form
@@ -190,17 +270,17 @@ export const EnhancedStationaryManager: React.FC = () => {
   };
 
   const handleAddCommonExpense = () => {
-    if (!commonAmount || !commonDescription || !selectedClass || !selectedSection) {
+    if (!commonAmount || !commonDescription || !selectedClass) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields including class and section.",
+        description: "Please fill in all required fields including class.",
         variant: "destructive",
       });
       return;
     }
 
     const totalAmount = parseFloat(commonAmount);
-    const affectedStudents = students.filter(s => s.class === selectedClass && s.section === selectedSection);
+    const affectedStudents = students.filter(s => s.current_class === selectedClass);
     const amountPerStudent = totalAmount / affectedStudents.length;
 
     const newCommonExpense: CommonExpense = {
@@ -210,7 +290,7 @@ export const EnhancedStationaryManager: React.FC = () => {
       totalAmount,
       category: "stationary",
       class: selectedClass,
-      section: selectedSection,
+      section: "A",
       academicYear: "2024-25",
       studentsAffected: affectedStudents.map(s => s.id),
       amountPerStudent,
@@ -255,10 +335,12 @@ export const EnhancedStationaryManager: React.FC = () => {
     });
   };
 
+  const studentsByClass = getStudentsByClass();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Stationary Management (Residential)</h2>
+        <h2 className="text-xl font-semibold">Stationary Management (Residential Students)</h2>
         <div className="flex gap-2">
           <Button onClick={downloadMonthlyReport} variant="outline">
             <Download className="h-4 w-4 mr-2" />
@@ -275,10 +357,10 @@ export const EnhancedStationaryManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Class and Section Filters */}
+      {/* Class Filter and Search */}
       <Card>
         <CardHeader>
-          <CardTitle>Class-wise Division</CardTitle>
+          <CardTitle>Class-wise Residential Students (1-12)</CardTitle>
           <div className="flex gap-4">
             <Select value={selectedClass} onValueChange={setSelectedClass}>
               <SelectTrigger className="w-32">
@@ -288,17 +370,6 @@ export const EnhancedStationaryManager: React.FC = () => {
                 <SelectItem value="">All Classes</SelectItem>
                 {getClassOptions().map(cls => (
                   <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedSection} onValueChange={setSelectedSection}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Section" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Sections</SelectItem>
-                {getSectionOptions(selectedClass).map(sec => (
-                  <SelectItem key={sec} value={sec}>Section {sec}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -316,12 +387,53 @@ export const EnhancedStationaryManager: React.FC = () => {
         </CardHeader>
       </Card>
 
-      <Tabs defaultValue="funds" className="space-y-4">
+      <Tabs defaultValue="students" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="students">Residential Students</TabsTrigger>
           <TabsTrigger value="funds">Expense Funds</TabsTrigger>
           <TabsTrigger value="individual">Individual Expenses</TabsTrigger>
           <TabsTrigger value="common">Common Expenses</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="students">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {getClassOptions().map(classNum => (
+              <Card key={classNum}>
+                <CardHeader>
+                  <CardTitle className="text-lg">Class {classNum}</CardTitle>
+                  <CardDescription>
+                    {studentsByClass[classNum]?.length || 0} residential students
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {studentsByClass[classNum]?.length > 0 ? (
+                      studentsByClass[classNum]
+                        .filter(student => 
+                          (student.first_name + ' ' + student.last_name)
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
+                        )
+                        .map(student => (
+                          <div key={student.id} className="flex items-center justify-between p-2 border rounded">
+                            <div>
+                              <p className="font-medium">{student.first_name} {student.last_name}</p>
+                              <p className="text-sm text-muted-foreground">{student.student_id}</p>
+                            </div>
+                            <Badge variant="secondary">Residential</Badge>
+                          </div>
+                        ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No residential students in this class
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
         <TabsContent value="funds">
           <Card>
@@ -340,9 +452,9 @@ export const EnhancedStationaryManager: React.FC = () => {
                   return (
                     <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
-                        <h4 className="font-medium">{student.fullName}</h4>
+                        <h4 className="font-medium">{student.first_name} {student.last_name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          Class {student.class}-{student.section}
+                          Class {student.current_class} • {student.student_id}
                         </p>
                       </div>
                       <div className="flex items-center gap-4">
@@ -392,6 +504,9 @@ export const EnhancedStationaryManager: React.FC = () => {
                       <p className="text-sm text-muted-foreground">
                         {expense.description} • {expense.date}
                       </p>
+                      <p className="text-sm text-muted-foreground">
+                        Class {expense.class}
+                      </p>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">₹{expense.amount.toLocaleString()}</div>
@@ -417,7 +532,7 @@ export const EnhancedStationaryManager: React.FC = () => {
                     <div>
                       <h4 className="font-medium">{expense.description}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Class {expense.class}-{expense.section} • {expense.date}
+                        Class {expense.class} • {expense.date}
                       </p>
                     </div>
                     <div className="text-right">
@@ -446,12 +561,12 @@ export const EnhancedStationaryManager: React.FC = () => {
               <Label htmlFor="student">Student</Label>
               <Select value={selectedStudent} onValueChange={setSelectedStudent}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select student" />
+                  <SelectValue placeholder="Select residential student" />
                 </SelectTrigger>
                 <SelectContent>
                   {getFilteredStudents().map((student) => (
                     <SelectItem key={student.id} value={student.id}>
-                      {student.fullName} (Class {student.class}-{student.section})
+                      {student.first_name} {student.last_name} (Class {student.current_class})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -499,34 +614,18 @@ export const EnhancedStationaryManager: React.FC = () => {
             <DialogTitle>Add Common Stationary Expense</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="class">Class</Label>
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getClassOptions().map(cls => (
-                      <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="section">Section</Label>
-                <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getSectionOptions(selectedClass).map(sec => (
-                      <SelectItem key={sec} value={sec}>Section {sec}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="class">Class</Label>
+              <Select value={selectedClass} onValueChange={setSelectedClass}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getClassOptions().map(cls => (
+                    <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -552,11 +651,11 @@ export const EnhancedStationaryManager: React.FC = () => {
               />
             </div>
 
-            {selectedClass && selectedSection && (
+            {selectedClass && (
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  This expense will be divided among {students.filter(s => s.class === selectedClass && s.section === selectedSection).length} students
-                  {commonAmount && ` (₹${(parseFloat(commonAmount) / students.filter(s => s.class === selectedClass && s.section === selectedSection).length).toFixed(2)} per student)`}
+                  This expense will be divided among {students.filter(s => s.current_class === selectedClass).length} residential students in Class {selectedClass}
+                  {commonAmount && ` (₹${(parseFloat(commonAmount) / students.filter(s => s.current_class === selectedClass).length).toFixed(2)} per student)`}
                 </p>
               </div>
             )}
