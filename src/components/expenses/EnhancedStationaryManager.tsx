@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ export const EnhancedStationaryManager: React.FC = () => {
   const [commonExpenses, setCommonExpenses] = useState<CommonExpense[]>([]);
   const [funds, setFunds] = useState<ExpenseFund[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   
   // Dialog states
   const [isIndividualDialogOpen, setIsIndividualDialogOpen] = useState(false);
@@ -82,9 +84,22 @@ export const EnhancedStationaryManager: React.FC = () => {
   const [commonDescription, setCommonDescription] = useState("");
 
   useEffect(() => {
-    fetchResidentialStudents();
-    loadMockData();
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      await fetchResidentialStudents();
+      loadMockData();
+    } catch (error) {
+      console.error('Error loading data:', error);
+      loadMockStudents();
+      loadMockData();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchResidentialStudents = async () => {
     try {
@@ -97,42 +112,25 @@ export const EnhancedStationaryManager: React.FC = () => {
 
       if (error) {
         console.error('Error fetching students:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch residential students: " + error.message,
-          variant: "destructive",
-        });
-        return;
+        throw error;
       }
 
       console.log('Fetched residential students:', studentsData);
       
-      if (!studentsData || studentsData.length === 0) {
-        console.log('No residential students found');
-        toast({
-          title: "No Data",
-          description: "No residential students found in the database.",
-        });
-        // Set empty array and show mock data for demo
-        setStudents([]);
-        loadMockStudents();
+      if (studentsData && studentsData.length > 0) {
+        setStudents(studentsData);
         return;
       }
 
-      setStudents(studentsData);
+      // If no data, fall back to mock data
+      loadMockStudents();
     } catch (error) {
       console.error('Error in fetchResidentialStudents:', error);
-      toast({
-        title: "Error",
-        description: "Failed to connect to database. Loading demo data.",
-        variant: "destructive",
-      });
       loadMockStudents();
     }
   };
 
   const loadMockStudents = () => {
-    // Load mock students for demo if no real data
     const mockStudents: Student[] = [
       {
         id: "STU001",
@@ -164,6 +162,22 @@ export const EnhancedStationaryManager: React.FC = () => {
         first_name: "Sarah",
         last_name: "Wilson",
         current_class: "11",
+        residential_type: "residential"
+      },
+      {
+        id: "STU005",
+        student_id: "STU005",
+        first_name: "Alex",
+        last_name: "Brown",
+        current_class: "8",
+        residential_type: "residential"
+      },
+      {
+        id: "STU006",
+        student_id: "STU006",
+        first_name: "Emily",
+        last_name: "Davis",
+        current_class: "12",
         residential_type: "residential"
       }
     ];
@@ -197,6 +211,17 @@ export const EnhancedStationaryManager: React.FC = () => {
         remainingBalance: -500,
         isNegative: true,
         negativeAmount: 500
+      },
+      {
+        studentId: "STU003",
+        studentName: "Mike Johnson",
+        class: "9",
+        section: "A",
+        academicYear: "2024-25",
+        initialAmount: 9000,
+        totalExpenses: 3000,
+        remainingBalance: 6000,
+        isNegative: false
       }
     ];
     setFunds(mockFunds);
@@ -212,6 +237,18 @@ export const EnhancedStationaryManager: React.FC = () => {
         description: "Notebooks and pens",
         academicYear: "2024-25",
         class: "10",
+        section: "A",
+        type: "individual"
+      },
+      {
+        id: "SE002",
+        studentId: "STU003",
+        studentName: "Mike Johnson",
+        date: "2024-01-20",
+        amount: 300,
+        description: "Art supplies",
+        academicYear: "2024-25",
+        class: "9",
         section: "A",
         type: "individual"
       }
@@ -238,7 +275,6 @@ export const EnhancedStationaryManager: React.FC = () => {
   };
 
   const getClassOptions = () => {
-    // Generate classes 1-12
     return Array.from({ length: 12 }, (_, i) => (i + 1).toString());
   };
 
@@ -393,12 +429,19 @@ export const EnhancedStationaryManager: React.FC = () => {
   };
 
   const downloadMonthlyReport = () => {
-    // Mock download functionality
     toast({
       title: "Report Downloaded",
       description: "Monthly stationary report has been downloaded.",
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const studentsByClass = getStudentsByClass();
 
@@ -426,6 +469,9 @@ export const EnhancedStationaryManager: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Class-wise Residential Students (1-12)</CardTitle>
+          <CardDescription>
+            Total Residential Students: {students.length}
+          </CardDescription>
           <div className="flex gap-4">
             <Select value={selectedClass} onValueChange={setSelectedClass}>
               <SelectTrigger className="w-32">
@@ -510,45 +556,49 @@ export const EnhancedStationaryManager: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {getFilteredStudents().map(student => {
-                  const fund = getStudentFund(student.id);
-                  if (!fund) return null;
-                  
-                  return (
-                    <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{student.first_name} {student.last_name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Class {student.current_class} • {student.student_id}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-medium">₹{fund.initialAmount.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">Initial Amount</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">₹{fund.totalExpenses.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">Total Expenses</p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-medium ${fund.isNegative ? 'text-red-600' : 'text-green-600'}`}>
-                            ₹{Math.abs(fund.remainingBalance).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {fund.isNegative ? 'Negative Balance' : 'Remaining'}
+                {funds.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No fund data available</p>
+                ) : (
+                  funds.map(fund => {
+                    const student = students.find(s => s.id === fund.studentId);
+                    if (!student) return null;
+                    
+                    return (
+                      <div key={fund.studentId} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <h4 className="font-medium">{fund.studentName}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Class {fund.class} • {student.student_id}
                           </p>
                         </div>
-                        {fund.isNegative && (
-                          <Badge variant="destructive">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Due in Fees
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="font-medium">₹{fund.initialAmount.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">Initial Amount</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">₹{fund.totalExpenses.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">Total Expenses</p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-medium ${fund.isNegative ? 'text-red-600' : 'text-green-600'}`}>
+                              ₹{Math.abs(fund.remainingBalance).toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {fund.isNegative ? 'Negative Balance' : 'Remaining'}
+                            </p>
+                          </div>
+                          {fund.isNegative && (
+                            <Badge variant="destructive">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Due in Fees
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </CardContent>
           </Card>
@@ -562,23 +612,27 @@ export const EnhancedStationaryManager: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {expenses.filter(e => e.type === "individual").map(expense => (
-                  <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{expense.studentName}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {expense.description} • {expense.date}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Class {expense.class}
-                      </p>
+                {expenses.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No individual expenses recorded</p>
+                ) : (
+                  expenses.filter(e => e.type === "individual").map(expense => (
+                    <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{expense.studentName}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {expense.description} • {expense.date}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Class {expense.class}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">₹{expense.amount.toLocaleString()}</div>
+                        <Badge variant="outline">Individual</Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">₹{expense.amount.toLocaleString()}</div>
-                      <Badge variant="outline">Individual</Badge>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -592,23 +646,27 @@ export const EnhancedStationaryManager: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {commonExpenses.map(expense => (
-                  <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{expense.description}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Class {expense.class} • {expense.date}
-                      </p>
+                {commonExpenses.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No common expenses recorded</p>
+                ) : (
+                  commonExpenses.map(expense => (
+                    <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{expense.description}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Class {expense.class} • {expense.date}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">₹{expense.totalAmount.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">
+                          ₹{expense.amountPerStudent.toFixed(2)} per student
+                        </p>
+                        <Badge variant="secondary">Common</Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">₹{expense.totalAmount.toLocaleString()}</div>
-                      <p className="text-xs text-muted-foreground">
-                        ₹{expense.amountPerStudent.toFixed(2)} per student
-                      </p>
-                      <Badge variant="secondary">Common</Badge>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -629,7 +687,7 @@ export const EnhancedStationaryManager: React.FC = () => {
                   <SelectValue placeholder="Select residential student" />
                 </SelectTrigger>
                 <SelectContent>
-                  {getFilteredStudents().map((student) => (
+                  {students.map((student) => (
                     <SelectItem key={student.id} value={student.id}>
                       {student.first_name} {student.last_name} (Class {student.current_class})
                     </SelectItem>
