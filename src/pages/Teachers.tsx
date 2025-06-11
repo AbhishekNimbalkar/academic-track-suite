@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import {
@@ -157,6 +158,35 @@ const Teachers: React.FC = () => {
     )
   );
 
+  // Generate unique teacher ID
+  const generateUniqueTeacherId = async (): Promise<string> => {
+    try {
+      // Get all existing teacher IDs
+      const { data: existingTeachers, error } = await supabase
+        .from('teachers')
+        .select('teacher_id');
+
+      if (error) throw error;
+
+      const existingIds = existingTeachers.map(t => t.teacher_id);
+      
+      // Find the next available ID
+      let counter = 1;
+      let newId = `TCH${counter.toString().padStart(3, "0")}`;
+      
+      while (existingIds.includes(newId)) {
+        counter++;
+        newId = `TCH${counter.toString().padStart(3, "0")}`;
+      }
+      
+      return newId;
+    } catch (error) {
+      console.error('Error generating unique teacher ID:', error);
+      // Fallback to timestamp-based ID if there's an error
+      return `TCH${Date.now().toString().slice(-6)}`;
+    }
+  };
+
   const handleAddTeacher = async () => {
     if (!canManageTeachers) {
       toast({
@@ -168,15 +198,15 @@ const Teachers: React.FC = () => {
     }
 
     try {
-      // Generate teacher ID
-      const newTeacherId = `TCH${(teachers.length + 1).toString().padStart(3, "0")}`;
+      // Generate unique teacher ID
+      const newTeacherId = await generateUniqueTeacherId();
       
       // Split name into first and last name
       const nameParts = newTeacher.name.trim().split(' ');
       const firstName = nameParts[0];
       const lastName = nameParts.slice(1).join(' ') || '';
 
-      // Insert teacher record directly without creating auth user first
+      // Insert teacher record
       const { data: teacherData, error: teacherError } = await supabase
         .from('teachers')
         .insert({
@@ -201,7 +231,7 @@ const Teachers: React.FC = () => {
       setIsAddDialogOpen(false);
       toast({
         title: "Teacher Added",
-        description: `${newTeacher.name} has been successfully added. They can now use their email to request login access.`,
+        description: `${newTeacher.name} has been successfully added with ID ${newTeacherId}.`,
       });
       
       // Reset form
