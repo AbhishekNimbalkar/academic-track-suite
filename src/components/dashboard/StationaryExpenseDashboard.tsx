@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,13 +37,15 @@ const mockIndividualExpenses = [
 
 const COLORS = ["#4f8cfb", "#92d075"]; // For charts
 
+type ClassSummary = { class: string; totalFund: number; used: number; count: number };
+
 function getClasses() {
   // Extract unique class names
   return [...new Set(mockStudents.map(s => s.class))];
 }
 
-function getClassWiseSummary(students) {
-  const byClass = {};
+function getClassWiseSummary(students): ClassSummary[] {
+  const byClass: Record<string, ClassSummary> = {};
   students.forEach(s => {
     if (!byClass[s.class]) {
       byClass[s.class] = { class: s.class, totalFund: 0, used: 0, count: 0 };
@@ -100,11 +101,14 @@ export default function StationaryExpenseDashboard() {
   const studentsWithNegative = mockStudents.filter(s => s.remainingFund < 0);
 
   // Data for charts
-  const classWiseData = useMemo(() =>
-    getClassWiseSummary(mockStudents).map(row => ({
-      class: row.class,
-      used: row.used,
-    })), []);
+  const classWiseData = useMemo<ClassSummary[]>(
+    () =>
+      getClassWiseSummary(mockStudents).map(row => ({
+        class: row.class,
+        used: row.used,
+      })),
+    []
+  );
 
   const pieData = [
     { name: "Common", value: totalCommon },
