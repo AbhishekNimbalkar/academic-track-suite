@@ -1,18 +1,32 @@
+
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 const classes = [
   "UKG", "LKG", ...Array.from({length: 12}, (_, i) => i === 10 ? "11th (Arts Premilitary College)" : `${i + 1}th`)
 ];
 const mediums = ["Marathi", "Semi-English"];
 
+// Mock data for UI demonstration
+const mockExams = [
+  { id: "1", exam_name: "FA1", class: "1st", medium: "Marathi" },
+  { id: "2", exam_name: "SA1", class: "1st", medium: "Marathi" },
+  { id: "3", exam_name: "Unit Test", class: "2nd", medium: "Semi-English" },
+];
+
+const mockSubjects = ["English", "Mathematics", "Science", "Social Studies", "Marathi"];
+
+const mockStudents = [
+  { id: "1", student_id: "STU001", first_name: "Rahul", last_name: "Sharma" },
+  { id: "2", student_id: "STU002", first_name: "Priya", last_name: "Patel" },
+  { id: "3", student_id: "STU003", first_name: "Amit", last_name: "Kumar" },
+];
+
 export const ManageMarks: React.FC = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  
   // Step selectors
   const [classSelected, setClassSelected] = useState("");
   const [mediumSelected, setMediumSelected] = useState("Marathi");
@@ -22,70 +36,37 @@ export const ManageMarks: React.FC = () => {
   const [subjectsList, setSubjectsList] = useState<string[]>([]);
   const [studentsList, setStudentsList] = useState<any[]>([]);
   const [marks, setMarks] = useState<Record<string, number | "">>({});
-  const [totalMarks, setTotalMarks] = useState<number | null>(null);
+  const [totalMarks, setTotalMarks] = useState<number | null>(100);
   const [saving, setSaving] = useState(false);
 
-  // Step 1: Fetch exams for selected class/medium
+  // Mock data filtering based on selections
   useEffect(() => {
     if (classSelected && mediumSelected) {
-      const fetchExams = async () => {
-        const { data, error } = await supabase
-          .from("exams")
-          .select("*")
-          .eq("class", classSelected)
-          .eq("medium", mediumSelected);
-        if (!error && data) setExamsList(data);
-      };
-      fetchExams();
+      const filteredExams = mockExams.filter(
+        exam => exam.class === classSelected && exam.medium === mediumSelected
+      );
+      setExamsList(filteredExams);
     } else {
       setExamsList([]);
       setExamSelected("");
     }
   }, [classSelected, mediumSelected]);
 
-  // Step 2: After exam is selected, fetch subjects & students
   useEffect(() => {
-    const fetchSubjects = async () => {
-      // You may want to adjust how subjects are fetched/stored per class
-      if (examSelected) {
-        // Example: hardcoded subject lists
-        // Optionally, fetch from backend if available!
-        setSubjectsList([
-          "English", "Mathematics", "Science", "Social Studies", "Marathi"
-          // ...change based on class if needed
-        ]);
-      } else {
-        setSubjectsList([]);
-      }
-    };
-    fetchSubjects();
+    if (examSelected) {
+      setSubjectsList(mockSubjects);
+    } else {
+      setSubjectsList([]);
+    }
   }, [examSelected]);
 
   useEffect(() => {
     if (classSelected && subjectSelected) {
-      // Fetch students for selected class
-      const fetchStudents = async () => {
-        const { data, error } = await supabase
-          .from("students")
-          .select("id, student_id, first_name, last_name")
-          .eq("current_class", classSelected);
-        if (!error && data) setStudentsList(data);
-      };
-      fetchStudents();
+      setStudentsList(mockStudents);
     } else {
       setStudentsList([]);
     }
   }, [classSelected, subjectSelected]);
-
-  // Step 3: After all selections, fetch total marks for validation
-  useEffect(() => {
-    if (examSelected && examsList.length) {
-      const exam = examsList.find(ex => ex.id === examSelected);
-      setTotalMarks(exam ? exam.total_marks : null);
-    } else {
-      setTotalMarks(null);
-    }
-  }, [examSelected, examsList]);
 
   // Handle per student input
   const handleMarkChange = (studentId: string, val: string) => {
@@ -96,89 +77,86 @@ export const ManageMarks: React.FC = () => {
     }
   };
 
-  // Save individual
+  // Save individual (UI only)
   const saveMark = async (studentId: string) => {
-    if (!user?.id || !subjectSelected || !examSelected) return;
     const val = marks[studentId];
     if (typeof val !== "number" || val < 0 || (totalMarks && val > totalMarks)) {
       toast({ title: "Validation", description: "Enter a valid number!" });
       return;
     }
     setSaving(true);
-    const { error } = await supabase
-      .from("marks")
-      .upsert({
-        student_id: studentId,
-        marks: val,
-        total_marks: totalMarks || 0,
-        exam_type: examSelected,
-        subject: subjectSelected,
-        created_by: user.id,
-        academic_year: (new Date()).getFullYear().toString(),
-      }, { onConflict: "student_id,exam_type,subject" });
-    setSaving(false);
-    if (error) {
-      toast({ title: "Error", description: error.message });
-    } else {
+    
+    // Simulate API call
+    setTimeout(() => {
+      setSaving(false);
       toast({ title: "Saved", description: `Mark saved for student.` });
-    }
+    }, 500);
   };
 
-  // Save all
+  // Save all (UI only)
   const saveAll = async () => {
-    if (!user?.id || studentsList.length === 0) return;
+    if (studentsList.length === 0) return;
     setSaving(true);
-    for (const student of studentsList) {
-      const val = marks[student.id];
-      if (typeof val !== "number" || val < 0 || (totalMarks && val > totalMarks)) continue;
-      await supabase
-        .from("marks")
-        .upsert({
-          student_id: student.id,
-          marks: val,
-          total_marks: totalMarks || 0,
-          exam_type: examSelected,
-          subject: subjectSelected,
-          created_by: user.id,
-          academic_year: (new Date()).getFullYear().toString(),
-        }, { onConflict: "student_id,exam_type,subject" });
-    }
-    setSaving(false);
-    toast({ title: "Success", description: "Marks updated for all students." });
+    
+    // Simulate API call
+    setTimeout(() => {
+      setSaving(false);
+      toast({ title: "Success", description: "Marks updated for all students." });
+    }, 1000);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex gap-4 flex-wrap">
-        <select value={classSelected} onChange={(e) => setClassSelected(e.target.value)} className="border rounded px-3 py-2 min-w-[120px]">
+        <select 
+          value={classSelected} 
+          onChange={(e) => setClassSelected(e.target.value)} 
+          className="border rounded px-3 py-2 min-w-[120px]"
+        >
           <option value="">Class</option>
           {classes.map((c) => (<option key={c} value={c}>{c}</option>))}
         </select>
-        <select value={mediumSelected} onChange={(e) => setMediumSelected(e.target.value)} className="border rounded px-3 py-2 min-w-[120px]">
+        
+        <select 
+          value={mediumSelected} 
+          onChange={(e) => setMediumSelected(e.target.value)} 
+          className="border rounded px-3 py-2 min-w-[120px]"
+        >
           {mediums.map((m) => (<option key={m} value={m}>{m}</option>))}
         </select>
-        <select value={examSelected} onChange={(e) => setExamSelected(e.target.value)} className="border rounded px-3 py-2 min-w-[180px]">
+        
+        <select 
+          value={examSelected} 
+          onChange={(e) => setExamSelected(e.target.value)} 
+          className="border rounded px-3 py-2 min-w-[180px]"
+        >
           <option value="">Exam</option>
           {examsList.map((ex) => (
             <option key={ex.id} value={ex.id}>{ex.exam_name}</option>
           ))}
         </select>
-        <select value={subjectSelected} onChange={(e) => setSubjectSelected(e.target.value)} className="border rounded px-3 py-2 min-w-[180px]">
+        
+        <select 
+          value={subjectSelected} 
+          onChange={(e) => setSubjectSelected(e.target.value)} 
+          className="border rounded px-3 py-2 min-w-[180px]"
+        >
           <option value="">Subject</option>
           {subjectsList.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
       </div>
+
       {studentsList.length > 0 && subjectSelected && examSelected && (
         <div>
           <table className="w-full border mt-4">
             <thead>
               <tr className="bg-muted">
                 <th className="px-2 py-1 border">Student ID</th>
-                <th className="px-2 py-1 border">Name</th>
+                <th className="px-2 py-1 border">Student Name</th>
                 <th className="px-2 py-1 border">Marks Obtained</th>
-                <th className="px-2 py-1 border"></th>
+                <th className="px-2 py-1 border">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -194,6 +172,7 @@ export const ManageMarks: React.FC = () => {
                       max={totalMarks ?? 100}
                       onChange={(e) => handleMarkChange(student.id, e.target.value)}
                       className="w-24"
+                      placeholder="0"
                     />
                   </td>
                   <td className="border px-2 py-1">
@@ -211,7 +190,9 @@ export const ManageMarks: React.FC = () => {
             </tbody>
           </table>
           <div className="flex justify-end mt-4">
-            <Button onClick={saveAll} disabled={saving}>Update Marks</Button>
+            <Button onClick={saveAll} disabled={saving}>
+              🔄 Update Marks
+            </Button>
           </div>
         </div>
       )}

@@ -8,7 +8,7 @@ import {
   DollarSign, BarChart, LogOut, School,
   FileText, Bell, Settings, GraduationCap,
   Book, PiggyBank, Receipt, UserPlus, Building2,
-  Hospital
+  Hospital, ClipboardCheck
 } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
@@ -21,6 +21,7 @@ export const Sidebar: React.FC = () => {
     { label: "Classes", path: "/classes", icon: <Building2 size={18} /> },
     { label: "Admission Form", path: "/student-admission", icon: <UserPlus size={18} /> },
     { label: "Academics", path: "/academics", icon: <BookOpen size={18} /> },
+    { label: "Exam Management", path: "/exam-management", icon: <ClipboardCheck size={18} /> },
     { label: "Attendance", path: "/attendance", icon: <CalendarDays size={18} /> },
     { label: "Fee Management", path: "/fees", icon: <DollarSign size={18} /> },
     { label: "Stationary", path: "/stationary", icon: <PiggyBank size={18} /> },
@@ -36,6 +37,7 @@ export const Sidebar: React.FC = () => {
     { label: "Students", path: "/students", icon: <Users size={18} /> },
     { label: "Admission Form", path: "/student-admission", icon: <UserPlus size={18} /> },
     { label: "Academics", path: "/academics", icon: <BookOpen size={18} /> },
+    { label: "Exam Management", path: "/exam-management", icon: <ClipboardCheck size={18} /> },
     { label: "Attendance", path: "/attendance", icon: <CalendarDays size={18} /> },
     { label: "Applications", path: "/applications", icon: <FileText size={18} /> },
   ];

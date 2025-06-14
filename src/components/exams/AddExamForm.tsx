@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -6,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useAuth } from "@/contexts/AuthContext";
 
 const classes = [
   "UKG", "LKG", ...Array.from({length: 12}, (_, i) => i === 10 ? "11th (Arts Premilitary College)" : `${i + 1}th`)
@@ -32,7 +31,6 @@ const AddExamSchema = z.object({
 type AddExamSchemaType = z.infer<typeof AddExamSchema>;
 
 export const AddExamForm: React.FC = () => {
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<AddExamSchemaType>({
@@ -48,28 +46,9 @@ export const AddExamForm: React.FC = () => {
   });
 
   async function onSubmit(values: AddExamSchemaType) {
-    if (!user?.id) return;
-    // Convert Date to yyyy-MM-dd string for Supabase
-    const exam_date_str = values.exam_date
-      ? values.exam_date.toISOString().split('T')[0]
-      : null;
-    const { error } = await supabase
-      .from("exams")
-      .insert({
-        exam_name: values.exam_name,
-        class: values.class,
-        medium: values.medium,
-        passing_marks: values.passing_marks,
-        total_marks: values.total_marks,
-        exam_date: exam_date_str,
-        created_by: user.id,
-      });
-    if (error) {
-      toast({ title: "Error", description: error.message });
-    } else {
-      toast({ title: "Success", description: "Exam added!" });
-      form.reset();
-    }
+    // UI only - just show success message
+    toast({ title: "Success", description: "Exam added successfully!" });
+    form.reset();
   }
 
   return (
@@ -183,7 +162,7 @@ export const AddExamForm: React.FC = () => {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Add Exam</Button>
+        <Button type="submit" className="w-full">➕ Add Exam</Button>
       </form>
     </Form>
   );
