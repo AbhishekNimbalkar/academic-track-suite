@@ -101,7 +101,7 @@ export default function StationaryExpenseDashboard() {
   const studentsWithNegative = mockStudents.filter(s => s.remainingFund < 0);
 
   // Data for charts
-  const classWiseData = useMemo<ClassSummary[]>(
+  const classWiseData = useMemo(
     () =>
       getClassWiseSummary(mockStudents).map(row => ({
         class: row.class,
