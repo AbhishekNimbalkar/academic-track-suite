@@ -183,7 +183,7 @@ export const EnhancedStationaryManager: React.FC = () => {
           total_expenses: 0,
           remaining_balance: 9000,
           academic_year: "2024-25",
-          section: "A"
+          section: "A",
         })
         .select()
         .single();
@@ -205,9 +205,9 @@ export const EnhancedStationaryManager: React.FC = () => {
         totalExpenses: 0,
         remainingBalance: 9000,
         isNegative: false,
-        id: newFund.id // <-- add id for fund from database
-      } as ExpenseFund & { id?: string }; // Force-allow .id, since we use it for fund_id below
-      setFunds(funds => [...funds, fund!]);
+        id: newFund.id // Set id for fund if needed
+      } as ExpenseFund & { id?: string };
+      setFunds((funds) => [...funds, fund!]);
     }
 
     // Create new expense
@@ -215,14 +215,14 @@ export const EnhancedStationaryManager: React.FC = () => {
       .from("stationary_expenses")
       .insert({
         student_id: studentForDialog.id,
-        fund_id: fund && "id" in fund && fund.id ? fund.id : "", // Use fund.id if available
-        amount,
+        fund_id: fund && "id" in fund && fund.id ? fund.id : "",
+        amount: amount,
         description: individualDescription,
         academic_year: "2024-25",
         class: studentForDialog.current_class,
         section: "A",
         date: new Date().toISOString().split("T")[0],
-        created_by: null // Set to null, as user.id unavailable
+        created_by: null, // Keep null for now, until user.id is available
       })
       .select()
       .single();
@@ -231,14 +231,14 @@ export const EnhancedStationaryManager: React.FC = () => {
       toast({ title: "Could not add expense", description: expErr?.message, variant: "destructive" });
       return;
     }
-    setExpenses(expenses => [
+    setExpenses((expenses) => [
       ...expenses,
       {
         id: exp.id,
         studentId: studentForDialog.id,
         studentName: `${studentForDialog.first_name} ${studentForDialog.last_name}`,
         date: exp.date,
-        amount,
+        amount: amount,
         description: individualDescription,
         academicYear: "2024-25",
         class: studentForDialog.current_class,
@@ -247,7 +247,7 @@ export const EnhancedStationaryManager: React.FC = () => {
       }
     ]);
 
-    // Update fund
+    // Update fund in the database and state
     const updatedFund = {
       ...fund!,
       totalExpenses: Number(fund!.totalExpenses) + amount,
@@ -264,8 +264,8 @@ export const EnhancedStationaryManager: React.FC = () => {
       })
       .eq("student_id", fund!.studentId);
 
-    setFunds(funds =>
-      funds.map(f =>
+    setFunds((funds) =>
+      funds.map((f) =>
         f.studentId === fund!.studentId
           ? updatedFund
           : f
