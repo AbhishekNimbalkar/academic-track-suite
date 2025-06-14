@@ -1,4 +1,3 @@
-
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,8 @@ import {
   UserCircle, Users, BookOpen, CalendarDays, 
   DollarSign, BarChart, LogOut, School,
   FileText, Bell, Settings, GraduationCap,
-  Book, PiggyBank, Receipt, UserPlus, Building2
+  Book, PiggyBank, Receipt, UserPlus, Building2,
+  Hospital
 } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
@@ -24,7 +24,7 @@ export const Sidebar: React.FC = () => {
     { label: "Attendance", path: "/attendance", icon: <CalendarDays size={18} /> },
     { label: "Fee Management", path: "/fees", icon: <DollarSign size={18} /> },
     { label: "Stationary", path: "/stationary", icon: <PiggyBank size={18} /> },
-    { label: "Library", path: "/library", icon: <Book size={18} /> },
+    { label: "Medical", path: "/medical", icon: <Hospital size={18} /> },
     { label: "Documents", path: "/documents", icon: <FileText size={18} /> },
     { label: "Notifications", path: "/notifications", icon: <Bell size={18} /> },
     { label: "Settings", path: "/settings", icon: <Settings size={18} /> },
