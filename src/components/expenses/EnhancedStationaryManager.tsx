@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -205,8 +204,9 @@ export const EnhancedStationaryManager: React.FC = () => {
         initialAmount: 9000,
         totalExpenses: 0,
         remainingBalance: 9000,
-        isNegative: false
-      };
+        isNegative: false,
+        id: newFund.id // <-- add id for fund from database
+      } as ExpenseFund & { id?: string }; // Force-allow .id, since we use it for fund_id below
       setFunds(funds => [...funds, fund!]);
     }
 
@@ -215,14 +215,14 @@ export const EnhancedStationaryManager: React.FC = () => {
       .from("stationary_expenses")
       .insert({
         student_id: studentForDialog.id,
-        fund_id: expErr ? undefined : undefined || "", // Passing empty string to avoid TS error. It will be updated after insert anyway.
+        fund_id: fund && "id" in fund && fund.id ? fund.id : "", // Use fund.id if available
         amount,
         description: individualDescription,
         academic_year: "2024-25",
         class: studentForDialog.current_class,
         section: "A",
         date: new Date().toISOString().split("T")[0],
-        created_by: user?.id
+        created_by: null // Set to null, as user.id unavailable
       })
       .select()
       .single();
@@ -293,7 +293,6 @@ export const EnhancedStationaryManager: React.FC = () => {
       return;
     }
 
-    // Only act on visible residential students
     const affectedStudents = students.map(s => s.id);
     const totalAmount = amountPerStudent * affectedStudents.length;
 
@@ -308,7 +307,7 @@ export const EnhancedStationaryManager: React.FC = () => {
         class: "All",
         section: "All",
         students_affected: affectedStudents,
-        added_by: user?.id
+        added_by: null // Use null until user.id is available from AuthContext
       })
       .select()
       .single();
@@ -339,7 +338,6 @@ export const EnhancedStationaryManager: React.FC = () => {
       if (affectedStudents.includes(fund.studentId)) {
         const newTotal = Number(fund.totalExpenses) + amountPerStudent;
         const newBalance = Number(fund.remainingBalance) - amountPerStudent;
-        // Update on Supabase
         supabase
           .from("stationary_expense_funds")
           .update({
