@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import StudentMedicalExpenseHistoryDialog from "./StudentMedicalExpenseHistoryDialog";
 
 // Reuse types from stationary/types for Student and ExpenseFund
 import { Student, ExpenseFund } from "../expenses/stationary/types";
@@ -43,6 +44,10 @@ export const EnhancedMedicalExpenseManager: React.FC = () => {
   const [doctorFee, setDoctorFee] = useState("");
   const [medicalFee, setMedicalFee] = useState("");
   const [description, setDescription] = useState("");
+
+  // History Dialog state
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [studentForHistory, setStudentForHistory] = useState<Student | null>(null);
 
   // Only admin or medical role may add/edit 
   const canAdd = hasPermission("manage_medical") || hasPermission("manage_stationary") || hasPermission("medical_add_expense");
@@ -257,6 +262,17 @@ export const EnhancedMedicalExpenseManager: React.FC = () => {
                       </p>
                       <p className="text-xs text-muted-foreground">Remaining Fund</p>
                     </div>
+                    {/* History Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setStudentForHistory(student);
+                        setHistoryDialogOpen(true);
+                      }}
+                    >
+                      <span className="mr-1">History</span>
+                    </Button>
                     {/* Add medical expense (admin or medical roles only) */}
                     {canAdd && (
                       <Button size="sm" onClick={() => openMedicalDialog(student)}>
@@ -274,7 +290,7 @@ export const EnhancedMedicalExpenseManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Add Medical Dialog (inline, simple version for brevity) */}
+      {/* Add Medical Dialog */}
       {medicalDialogOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
           <div className="bg-white rounded-md shadow-lg w-full max-w-md p-6">
@@ -306,6 +322,22 @@ export const EnhancedMedicalExpenseManager: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Student Expense History Dialog */}
+      <StudentMedicalExpenseHistoryDialog
+        isOpen={historyDialogOpen}
+        onClose={() => setHistoryDialogOpen(false)}
+        studentName={
+          studentForHistory
+            ? `${studentForHistory.first_name} ${studentForHistory.last_name}`
+            : ""
+        }
+        expenses={
+          studentForHistory
+            ? medicalExpenses.filter((e) => e.studentId === studentForHistory.id)
+            : []
+        }
+      />
     </div>
   );
 };
