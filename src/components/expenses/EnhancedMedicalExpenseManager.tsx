@@ -13,7 +13,7 @@ import StudentMedicalExpenseHistoryDialog from "./StudentMedicalExpenseHistoryDi
 // Reuse types from stationary/types for Student and ExpenseFund
 import { Student, ExpenseFund } from "../expenses/stationary/types";
 
-interface MedicalExpense {
+export interface MedicalExpense {
   id: string;
   studentId: string;
   studentName: string;
