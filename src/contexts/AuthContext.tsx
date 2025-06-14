@@ -3,8 +3,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
+// UPDATED: AuthContextType.user now always has id and email.
+interface AuthUser {
+  id: string;
+  email: string;
+}
 interface AuthContextType {
-  user: { email: string } | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   userRole: string | null;
@@ -62,16 +67,19 @@ const ROLE_PERMISSIONS = {
 // Mock users database (fallback for admin)
 const MOCK_USERS = {
   "admin@school.com": {
+    id: "00000000-0000-0000-0000-000000000001",
     password: "admin123",
     role: "admin",
     email: "admin@school.com"
   },
   "stationary@school.com": {
+    id: "00000000-0000-0000-0000-000000000002",
     password: "stationary123",
     role: "stationary", 
     email: "stationary@school.com"
   },
   "medical@school.com": {
+    id: "00000000-0000-0000-0000-000000000003",
     password: "medical123",
     role: "medical",
     email: "medical@school.com"
@@ -81,7 +89,8 @@ const MOCK_USERS = {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
-  const [user, setUser] = useState<{ email: string } | null>(null);
+  // user is always { id, email } or null
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
@@ -98,13 +107,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           // Check if user is a teacher
           const { data: teacherData, error: teacherError } = await supabase
             .from('teachers')
-            .select('teacher_id, email')
+            .select('teacher_id, email, id')
             .eq('email', session.user.email)
             .single();
           
           if (teacherData && !teacherError) {
-            // User is a teacher
-            setUser({ email: session.user.email || '' });
+            // User is a teacher. Provide { id, email }
+            setUser({ id: session.user.id, email: session.user.email || "" });
             setUserRole('teacher');
           } else {
             // Fallback to mock auth for existing users
@@ -113,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else {
           setUser(null);
           setUserRole(null);
-          // Check for mock auth fallback
           checkMockAuth();
         }
         setIsLoading(false);
@@ -135,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Check if user is already logged in with mock auth
     const savedUser = localStorage.getItem('currentUser');
     const savedRole = localStorage.getItem('currentUserRole');
-    
+    // user must have id and email in localStorage
     if (savedUser && savedRole) {
       setUser(JSON.parse(savedUser));
       setUserRole(savedRole);
@@ -147,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // First check if this is a teacher trying to log in
       const { data: teacherData, error: teacherError } = await supabase
         .from('teachers')
-        .select('teacher_id, email')
+        .select('teacher_id, email, id')
         .eq('email', email)
         .single();
 
@@ -189,6 +197,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         // Teacher login successful
+        // setUser with id and email from session
+        if (authData.user) {
+          setUser({ id: authData.user.id, email });
+          setUserRole('teacher');
+          localStorage.setItem('currentUser', JSON.stringify({ id: authData.user.id, email }));
+          localStorage.setItem('currentUserRole', 'teacher');
+        }
         toast({
           title: "Welcome back!",
           description: "You have been logged in successfully.",
@@ -198,16 +213,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Fallback to mock auth for admin and other roles
       const mockUser = MOCK_USERS[email as keyof typeof MOCK_USERS];
-      
       if (!mockUser || mockUser.password !== password) {
         throw new Error("Invalid email or password");
       }
-
-      const userData = { email: mockUser.email };
-      
+      // Provide { id, email }
+      const userData: AuthUser = { id: mockUser.id, email: mockUser.email };
       setUser(userData);
       setUserRole(mockUser.role);
-      
+
       // Save to localStorage
       localStorage.setItem('currentUser', JSON.stringify(userData));
       localStorage.setItem('currentUserRole', mockUser.role);
@@ -229,19 +242,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      // Sign out from Supabase if authenticated there
       if (session) {
         await supabase.auth.signOut();
       }
-      
       setUser(null);
       setUserRole(null);
       setSession(null);
-      
+
       // Clear localStorage
       localStorage.removeItem('currentUser');
       localStorage.removeItem('currentUserRole');
-      
       toast({
         title: "Logged out",
         description: "You have been logged out successfully",
