@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,9 @@ export const EnhancedStationaryManager: React.FC = () => {
       console.log('Fetched residential students:', studentsData);
       
       if (studentsData && studentsData.length > 0) {
-        setStudents(studentsData);
+        // Filter out students with null or undefined `current_class` to prevent crashes
+        const validStudents = studentsData.filter(s => s && s.current_class);
+        setStudents(validStudents);
         return;
       }
 
