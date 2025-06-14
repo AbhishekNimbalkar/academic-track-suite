@@ -174,6 +174,8 @@ export const EnhancedStationaryManager: React.FC = () => {
 
     // Find the student's fund (make sure it exists)
     let fund = getStudentFund(studentForDialog.id);
+    let fundId: string | undefined = (fund as any)?.id; // Might be undefined for legacy funds in local state
+
     if (!fund) {
       const { data: newFund, error: nfErr } = await supabase
         .from("stationary_expense_funds")
@@ -187,7 +189,7 @@ export const EnhancedStationaryManager: React.FC = () => {
         })
         .select()
         .single();
-      if (!newFund) {
+      if (!newFund || !newFund.id) {
         toast({
           title: "Error",
           description: "Could not create stationary fund for the student.",
@@ -195,6 +197,7 @@ export const EnhancedStationaryManager: React.FC = () => {
         });
         return;
       }
+      fundId = newFund.id;
       fund = {
         studentId: studentForDialog.id,
         studentName: `${studentForDialog.first_name} ${studentForDialog.last_name}`,
@@ -205,24 +208,43 @@ export const EnhancedStationaryManager: React.FC = () => {
         totalExpenses: 0,
         remainingBalance: 9000,
         isNegative: false,
-        id: newFund.id // Set id for fund if needed
-      } as ExpenseFund & { id?: string };
-      setFunds((funds) => [...funds, fund!]);
+        id: newFund.id
+      } as ExpenseFund & { id: string };
+      setFunds((funds) => [...funds, fund]);
+    } else if ((fund as any).id) {
+      fundId = (fund as any).id; // If already has id
+    } else {
+      // If fund exists but has no id, reload from Supabase
+      const { data: refreshedFund } = await supabase
+        .from("stationary_expense_funds")
+        .select("id")
+        .eq("student_id", studentForDialog.id)
+        .maybeSingle();
+      if (refreshedFund?.id) {
+        fundId = refreshedFund.id;
+      } else {
+        toast({
+          title: "Error",
+          description: "Unable to fetch or create fund id.",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
-    // Create new expense
+    // Create new expense (ensure fundId is a string)
     const { data: exp, error: expErr } = await supabase
       .from("stationary_expenses")
       .insert({
         student_id: studentForDialog.id,
-        fund_id: fund && "id" in fund && fund.id ? fund.id : "",
+        fund_id: fundId,
         amount: amount,
         description: individualDescription,
         academic_year: "2024-25",
         class: studentForDialog.current_class,
         section: "A",
         date: new Date().toISOString().split("T")[0],
-        created_by: null, // Keep null for now, until user.id is available
+        created_by: null,
       })
       .select()
       .single();
@@ -262,7 +284,7 @@ export const EnhancedStationaryManager: React.FC = () => {
         total_expenses: updatedFund.totalExpenses,
         remaining_balance: updatedFund.remainingBalance
       })
-      .eq("student_id", fund!.studentId);
+      .eq("student_id", studentForDialog.id);
 
     setFunds((funds) =>
       funds.map((f) =>
