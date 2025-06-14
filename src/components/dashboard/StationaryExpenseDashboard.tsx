@@ -1,3 +1,5 @@
+
+// FIX: Move Label import to the top.
 import React, { useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +10,7 @@ import { Table, TableHead, TableBody, TableRow, TableCell, TableHeader } from "@
 import { BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { format, subMonths } from "date-fns";
+import { Label } from "@/components/ui/label";
 
 // Mock data (replace with real API later)
 const mockStudents = [
