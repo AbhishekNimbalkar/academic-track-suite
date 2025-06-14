@@ -66,6 +66,50 @@ export type Database = {
         }
         Relationships: []
       }
+      exams: {
+        Row: {
+          class: string
+          created_at: string
+          created_by: string
+          exam_date: string
+          exam_name: string
+          id: string
+          medium: string
+          passing_marks: number
+          total_marks: number
+        }
+        Insert: {
+          class: string
+          created_at?: string
+          created_by: string
+          exam_date: string
+          exam_name: string
+          id?: string
+          medium: string
+          passing_marks: number
+          total_marks: number
+        }
+        Update: {
+          class?: string
+          created_at?: string
+          created_by?: string
+          exam_date?: string
+          exam_name?: string
+          id?: string
+          medium?: string
+          passing_marks?: number
+          total_marks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fees: {
         Row: {
           academic_year: string
