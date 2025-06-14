@@ -22,12 +22,12 @@ const classes = [
 const mediums = ["Marathi", "Semi-English"];
 
 const AddExamSchema = z.object({
-  exam_name: z.string().min(2),
-  class: z.string(),
-  medium: z.enum(["Marathi", "Semi-English"]),
-  passing_marks: z.coerce.number().min(0),
-  total_marks: z.coerce.number().min(1),
-  exam_date: z.date(),
+  exam_name: z.string().min(2, "Exam name must be at least 2 characters"),
+  class: z.string().min(1, "Please select a class"),
+  medium: z.enum(["Marathi", "Semi-English"], { required_error: "Please select a medium" }),
+  passing_marks: z.coerce.number().min(0, "Passing marks must be 0 or greater"),
+  total_marks: z.coerce.number().min(1, "Total marks must be at least 1"),
+  exam_date: z.date({ required_error: "Please select an exam date" }),
 });
 
 type AddExamSchemaType = z.infer<typeof AddExamSchema>;
@@ -49,35 +49,73 @@ export const AddExamForm: React.FC = () => {
   });
 
   async function onSubmit(values: AddExamSchemaType) {
+    console.log("Form submission started with values:", values);
+    console.log("Current user:", user);
+
     if (!user) {
-      toast({ title: "Error", description: "You must be logged in to add exams." });
+      console.error("No user found");
+      toast({ 
+        title: "Error", 
+        description: "You must be logged in to add exams.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate that passing marks doesn't exceed total marks
+    if (values.passing_marks >= values.total_marks) {
+      toast({ 
+        title: "Error", 
+        description: "Passing marks must be less than total marks.",
+        variant: "destructive"
+      });
       return;
     }
 
     try {
-      const { error } = await supabase
+      console.log("Attempting to insert exam into database...");
+      
+      const examData = {
+        exam_name: values.exam_name.trim(),
+        class: values.class,
+        medium: values.medium,
+        passing_marks: Number(values.passing_marks),
+        total_marks: Number(values.total_marks),
+        exam_date: values.exam_date.toISOString().split('T')[0],
+        created_by: user.id
+      };
+
+      console.log("Exam data to insert:", examData);
+
+      const { data, error } = await supabase
         .from('exams')
-        .insert([{
-          exam_name: values.exam_name,
-          class: values.class,
-          medium: values.medium,
-          passing_marks: values.passing_marks,
-          total_marks: values.total_marks,
-          exam_date: values.exam_date.toISOString().split('T')[0],
-          created_by: user.id
-        }]);
+        .insert([examData])
+        .select();
 
       if (error) {
-        console.error('Error adding exam:', error);
-        toast({ title: "Error", description: "Failed to add exam. Please try again." });
+        console.error('Supabase error:', error);
+        toast({ 
+          title: "Error", 
+          description: `Failed to add exam: ${error.message}`,
+          variant: "destructive"
+        });
         return;
       }
 
-      toast({ title: "Success", description: "Exam added successfully!" });
+      console.log('Exam added successfully:', data);
+      toast({ 
+        title: "Success", 
+        description: "Exam added successfully!",
+        variant: "default"
+      });
       form.reset();
     } catch (error) {
-      console.error('Error adding exam:', error);
-      toast({ title: "Error", description: "Failed to add exam. Please try again." });
+      console.error('Unexpected error:', error);
+      toast({ 
+        title: "Error", 
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     }
   }
 
