@@ -232,8 +232,28 @@ export const EnhancedStationaryManager: React.FC = () => {
     setCommonExpenses(mockCommonExpenses);
   };
 
+  // New: Update getClassOptions to match only the necessary items
   const getClassOptions = () => {
-    return Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+    // 1-10 (strings)
+    const classes = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
+    // 11th APC/USA and 12th APC/USA
+    classes.push("11-APC", "11-USA", "12-APC", "12-USA");
+    return classes; // ["1", ..., "10", "11-APC", "11-USA", "12-APC", "12-USA"]
+  };
+
+  // Helper to get filtered students
+  const getRelevantStudents = () => {
+    return students.filter((student) => {
+      const cls = student.current_class;
+      const stream = student.stream || "";
+      // 1-10: OK
+      if (["1","2","3","4","5","6","7","8","9","10"].includes(cls)) return true;
+      // 11 and 12 with Stream: only APC/USA
+      if (cls === "11" || cls === "12") {
+        return stream === "APC" || stream === "USA";
+      }
+      return false;
+    });
   };
 
   const getStudentFund = (studentId: string) => {
@@ -479,9 +499,9 @@ export const EnhancedStationaryManager: React.FC = () => {
       {/* Class Filter and Search */}
       <Card>
         <CardHeader>
-          <CardTitle>Class-wise Residential Students (1-12)</CardTitle>
+          <CardTitle>Class-wise Residential Students (1st-10th, 11th/12th Streams)</CardTitle>
           <CardDescription>
-            Total Residential Students: {students.length}
+            Total Residential Students: {getRelevantStudents().length}
           </CardDescription>
           <div className="flex gap-4">
             <Select
@@ -495,9 +515,20 @@ export const EnhancedStationaryManager: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Classes</SelectItem>
-                {getClassOptions().map(cls => (
-                  <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
-                ))}
+                {
+                  getClassOptions().map(clsOpt => {
+                    if (/^\d+$/.test(clsOpt)) {
+                      return <SelectItem key={clsOpt} value={clsOpt}>Class {clsOpt}</SelectItem>;
+                    }
+                    if (clsOpt.startsWith("11-")) {
+                      return <SelectItem key={clsOpt} value={clsOpt}>Class 11 ({clsOpt.endsWith("APC") ? "APC" : "USA"})</SelectItem>;
+                    }
+                    if (clsOpt.startsWith("12-")) {
+                      return <SelectItem key={clsOpt} value={clsOpt}>Class 12 ({clsOpt.endsWith("APC") ? "APC" : "USA"})</SelectItem>;
+                    }
+                    return null;
+                  })
+                }
               </SelectContent>
             </Select>
             <div className="relative flex-1">
@@ -523,7 +554,11 @@ export const EnhancedStationaryManager: React.FC = () => {
         </TabsList>
 
         <TabsContent value="students">
-          <StudentsTabContent students={students} searchQuery={searchQuery} />
+          <StudentsTabContent
+            students={getRelevantStudents()}
+            searchQuery={searchQuery}
+            selectedClass={selectedClass}
+          />
         </TabsContent>
 
         <TabsContent value="funds">
