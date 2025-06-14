@@ -54,6 +54,8 @@ const ROLE_PERMISSIONS = {
     "manage_medical_expenses",
     "view_medical_reports",
     "add_medical_records",
+    "manage_medical",
+    "medical_add_expense",
   ],
 };
 
