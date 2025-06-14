@@ -329,6 +329,15 @@ export const EnhancedStationaryManager: React.FC = () => {
                             <div>
                                 <h4 className="font-medium">{student.first_name} {student.last_name}</h4>
                                 <p className="text-sm text-muted-foreground">{student.student_id}</p>
+                                <p className={`text-xs mt-1 ${fund?.isNegative ? 'text-red-600' : 'text-green-700'} font-bold`}>
+                                  {fund ? (
+                                    <>
+                                      Remaining Fund: ₹{fund.remainingBalance.toLocaleString()}
+                                    </>
+                                  ) : (
+                                    <>Fund: N/A</>
+                                  )}
+                                </p>
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="text-right">

@@ -172,6 +172,161 @@ export type Database = {
           },
         ]
       }
+      stationary_common_expenses: {
+        Row: {
+          academic_year: string
+          added_by: string | null
+          amount_per_student: number
+          class: string | null
+          created_at: string | null
+          date: string
+          description: string
+          id: string
+          section: string | null
+          students_affected: string[]
+          total_amount: number
+        }
+        Insert: {
+          academic_year: string
+          added_by?: string | null
+          amount_per_student: number
+          class?: string | null
+          created_at?: string | null
+          date?: string
+          description: string
+          id?: string
+          section?: string | null
+          students_affected: string[]
+          total_amount: number
+        }
+        Update: {
+          academic_year?: string
+          added_by?: string | null
+          amount_per_student?: number
+          class?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string
+          id?: string
+          section?: string | null
+          students_affected?: string[]
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stationary_common_expenses_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stationary_expense_funds: {
+        Row: {
+          academic_year: string
+          created_at: string | null
+          id: string
+          initial_amount: number
+          remaining_balance: number
+          section: string
+          student_id: string
+          total_expenses: number
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string | null
+          id?: string
+          initial_amount: number
+          remaining_balance: number
+          section?: string
+          student_id: string
+          total_expenses?: number
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string | null
+          id?: string
+          initial_amount?: number
+          remaining_balance?: number
+          section?: string
+          student_id?: string
+          total_expenses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stationary_expense_funds_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stationary_expenses: {
+        Row: {
+          academic_year: string
+          amount: number
+          class: string
+          created_at: string | null
+          created_by: string | null
+          date: string
+          description: string
+          fund_id: string
+          id: string
+          section: string
+          student_id: string
+        }
+        Insert: {
+          academic_year: string
+          amount: number
+          class: string
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          description: string
+          fund_id: string
+          id?: string
+          section: string
+          student_id: string
+        }
+        Update: {
+          academic_year?: string
+          amount?: number
+          class?: string
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          description?: string
+          fund_id?: string
+          id?: string
+          section?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stationary_expenses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stationary_expenses_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "stationary_expense_funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stationary_expenses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           admission_date: string
