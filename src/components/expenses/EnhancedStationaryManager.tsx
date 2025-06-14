@@ -384,6 +384,16 @@ export const EnhancedStationaryManager: React.FC = () => {
 
     const totalAmount = parseFloat(commonAmount);
     const affectedStudents = students.filter(s => s.current_class === selectedClass);
+    
+    if (affectedStudents.length === 0) {
+      toast({
+        title: "No Students",
+        description: `There are no residential students in Class ${selectedClass} to apply this expense to.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const amountPerStudent = totalAmount / affectedStudents.length;
 
     const newCommonExpense: CommonExpense = {
@@ -850,7 +860,7 @@ export const EnhancedStationaryManager: React.FC = () => {
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-muted-foreground">
                   This expense will be divided among {students.filter(s => s.current_class === selectedClass).length} residential students in Class {selectedClass}
-                  {commonAmount && ` (₹${(parseFloat(commonAmount) / students.filter(s => s.current_class === selectedClass).length).toFixed(2)} per student)`}
+                  {commonAmount && students.filter(s => s.current_class === selectedClass).length > 0 && ` (₹${(parseFloat(commonAmount) / students.filter(s => s.current_class === selectedClass).length).toFixed(2)} per student)`}
                 </p>
               </div>
             )}
@@ -900,7 +910,7 @@ export const EnhancedStationaryManager: React.FC = () => {
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-muted-foreground">
                   This expense will be divided among all {students.length} residential students
-                  {customAmount && ` (₹${(parseFloat(customAmount) / students.length || 0).toFixed(2)} per student)`}
+                  {customAmount && students.length > 0 && ` (₹${(parseFloat(customAmount) / students.length).toFixed(2)} per student)`}
                 </p>
               </div>
             )}
