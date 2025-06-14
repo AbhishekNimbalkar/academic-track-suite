@@ -7,9 +7,13 @@ import { EnhancedStationaryManager } from "@/components/expenses/EnhancedStation
 
 const Stationary: React.FC = () => {
   const { hasPermission } = useAuth();
-  
-  // Check if user has permission
-  if (!hasPermission("manage_stationary") && !hasPermission("view_residential_students")) {
+
+  // Allow admin (manage_stationary), residential viewer, or stationery (stationary_add_expense)
+  if (
+    !hasPermission("manage_stationary") &&
+    !hasPermission("view_residential_students") &&
+    !hasPermission("stationary_add_expense")
+  ) {
     return <Navigate to="/dashboard" replace />;
   }
 
