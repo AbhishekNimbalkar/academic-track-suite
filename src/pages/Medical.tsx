@@ -1,15 +1,18 @@
-
 import React from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { EnhancedMedicalManager } from "@/components/expenses/EnhancedMedicalManager";
+import EnhancedMedicalExpenseManager from "@/components/expenses/EnhancedMedicalExpenseManager";
 
 const Medical: React.FC = () => {
   const { hasPermission } = useAuth();
   
-  // Check if user has permission
-  if (!hasPermission("manage_medical") && !hasPermission("view_residential_students")) {
+  // Allow admin (manage_medical), residential viewer, stationery, or "medical" roles
+  if (
+    !hasPermission("manage_medical") &&
+    !hasPermission("medical_add_expense") &&
+    !hasPermission("manage_stationary")
+  ) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -17,7 +20,7 @@ const Medical: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Medical Management</h1>
-        <EnhancedMedicalManager />
+        <EnhancedMedicalExpenseManager />
       </div>
     </MainLayout>
   );
