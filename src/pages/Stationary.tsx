@@ -1,9 +1,9 @@
+
 import React from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { EnhancedStationaryManager } from "@/components/expenses/EnhancedStationaryManager";
-import StationaryExpenseDashboard from "@/components/dashboard/StationaryExpenseDashboard";
 
 const Stationary: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -23,8 +23,6 @@ const Stationary: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* New Dashboard */}
-        <StationaryExpenseDashboard />
         <h1 className="text-2xl font-bold tracking-tight">Stationary Management</h1>
         <EnhancedStationaryManager />
       </div>
