@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -160,40 +161,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .single();
 
       if (teacherData && !teacherError) {
-        // This is a teacher - check if they have a Supabase auth account
+        // This is a teacher - try to sign in first
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (authError) {
-          // Teacher doesn't have auth account yet - create one
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/dashboard`,
-              data: {
-                role: 'teacher'
+          // If sign in fails, check if it's because account doesn't exist
+          if (authError.message.includes('Invalid login credentials')) {
+            // Teacher account doesn't exist yet - create one
+            console.log('Creating new teacher account...');
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                emailRedirectTo: `${window.location.origin}/dashboard`,
+                data: {
+                  role: 'teacher'
+                }
               }
+            });
+
+            if (signUpError) {
+              if (signUpError.message.includes('User already registered')) {
+                toast({
+                  title: "Login Failed",
+                  description: "This email is already registered. Please check your password and try again.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              throw signUpError;
             }
-          });
 
-          if (signUpError) throw signUpError;
+            // Update teacher record with auth user id
+            if (signUpData.user) {
+              await supabase
+                .from('teachers')
+                .update({ auth_user_id: signUpData.user.id })
+                .eq('email', email);
+            }
 
-          // Update teacher record with auth user id
-          if (signUpData.user) {
-            await supabase
-              .from('teachers')
-              .update({ auth_user_id: signUpData.user.id })
-              .eq('email', email);
+            toast({
+              title: "Account Created",
+              description: "Your teacher account has been created. Please check your email for verification (if required) and try logging in again.",
+            });
+            return;
+          } else {
+            throw authError;
           }
-
-          toast({
-            title: "Account Created",
-            description: "Your teacher account has been created. Please check your email for verification (if required) and try logging in again.",
-          });
-          return;
         }
 
         // Teacher login successful
