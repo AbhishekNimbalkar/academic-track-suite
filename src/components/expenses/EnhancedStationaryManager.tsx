@@ -484,12 +484,17 @@ export const EnhancedStationaryManager: React.FC = () => {
             Total Residential Students: {students.length}
           </CardDescription>
           <div className="flex gap-4">
-            <Select value={selectedClass} onValueChange={setSelectedClass}>
+            <Select
+              value={selectedClass || 'all'}
+              onValueChange={(value) => {
+                setSelectedClass(value === 'all' ? '' : value);
+              }}
+            >
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Class" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Classes</SelectItem>
+                <SelectItem value="all">All Classes</SelectItem>
                 {getClassOptions().map(cls => (
                   <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
                 ))}
