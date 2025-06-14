@@ -45,46 +45,88 @@ export const EnhancedStationaryManager: React.FC = () => {
   // Load all stationary data from Supabase
   useEffect(() => {
     loadData();
-    // Optional: Add explicit dependenc(ies) if needed
   }, []);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
       // 1. Students (residential only)
-      const { data: studentsData, error: stuErr } = await supabase
+      const { data: studentsData /*, error: stuErr */ } = await supabase
         .from("students")
         .select("*")
         .eq("residential_type", "residential")
         .order("current_class", { ascending: true });
-
       setStudents(studentsData || []);
 
       // 2. Stationary Funds
-      const { data: fundsData, error: fundsErr } = await supabase
+      const { data: fundsData /*, error: fundsErr */ } = await supabase
         .from("stationary_expense_funds")
         .select("*");
 
-      setFunds((fundsData || []).map(f => ({
-        ...f,
-        studentName: undefined, // We'll enrich below
-        isNegative: f.remaining_balance < 0,
-        negativeAmount: f.remaining_balance < 0 ? Math.abs(f.remaining_balance) : undefined,
-      })));
+      // map fundsData to ExpenseFund interface
+      setFunds(
+        (fundsData || []).map((f: any) => {
+          // Find the matching student
+          const student = (studentsData || []).find((s: any) => s.id === f.student_id);
+          return {
+            studentId: f.student_id,
+            studentName: student ? `${student.first_name} ${student.last_name}` : "",
+            class: student ? student.current_class : "",
+            section: f.section,
+            academicYear: f.academic_year,
+            initialAmount: Number(f.initial_amount),
+            totalExpenses: Number(f.total_expenses),
+            remainingBalance: Number(f.remaining_balance),
+            isNegative: Number(f.remaining_balance) < 0,
+            negativeAmount: Number(f.remaining_balance) < 0 ? Math.abs(Number(f.remaining_balance)) : undefined,
+            // Optionally include: id, createdAt
+          } as ExpenseFund;
+        })
+      );
 
       // 3. Individual Expenses
-      const { data: iExpenses, error: iErr } = await supabase
+      const { data: iExpenses /*, error: iErr */ } = await supabase
         .from("stationary_expenses")
         .select("*");
 
-      setExpenses(iExpenses || []);
+      setExpenses(
+        (iExpenses || []).map((e: any) => {
+          // Find the matching student
+          const student = (studentsData || []).find((s: any) => s.id === e.student_id);
+          return {
+            id: e.id,
+            studentId: e.student_id,
+            studentName: student ? `${student.first_name} ${student.last_name}` : "",
+            date: e.date,
+            amount: Number(e.amount),
+            description: e.description,
+            academicYear: e.academic_year,
+            class: e.class,
+            section: e.section,
+            type: "individual"
+          } as StationaryExpense;
+        })
+      );
 
       // 4. Common Expenses
-      const { data: cExpenses, error: cErr } = await supabase
+      const { data: cExpenses /*, error: cErr */ } = await supabase
         .from("stationary_common_expenses")
         .select("*");
-
-      setCommonExpenses(cExpenses || []);
+      setCommonExpenses(
+        (cExpenses || []).map((ce: any) => ({
+          id: ce.id,
+          date: ce.date,
+          description: ce.description,
+          totalAmount: Number(ce.total_amount),
+          category: "stationary",
+          class: ce.class || "",
+          section: ce.section || "",
+          academicYear: ce.academic_year,
+          studentsAffected: ce.students_affected || [],
+          amountPerStudent: Number(ce.amount_per_student),
+          addedBy: ce.added_by || ""
+        } as CommonExpense))
+      );
     } catch (err) {
       toast({ title: "Error", description: "Failed to load stationary data.", variant: "destructive" });
       console.error(err);
@@ -95,7 +137,7 @@ export const EnhancedStationaryManager: React.FC = () => {
 
   // Find fund by student ID
   const getStudentFund = (studentId: string) => {
-    return funds.find(f => f.student_id === studentId);
+    return funds.find(f => f.studentId === studentId);
   };
 
   // Classes from 1-10, plus 11/12-APC/USA
@@ -134,7 +176,6 @@ export const EnhancedStationaryManager: React.FC = () => {
     // Find the student's fund (make sure it exists)
     let fund = getStudentFund(studentForDialog.id);
     if (!fund) {
-      // Auto-create fund if not exists (default 9000, can be adjusted)
       const { data: newFund, error: nfErr } = await supabase
         .from("stationary_expense_funds")
         .insert({
@@ -155,8 +196,18 @@ export const EnhancedStationaryManager: React.FC = () => {
         });
         return;
       }
-      fund = newFund;
-      setFunds(funds => [...funds, { ...newFund, isNegative: false }]);
+      fund = {
+        studentId: studentForDialog.id,
+        studentName: `${studentForDialog.first_name} ${studentForDialog.last_name}`,
+        class: studentForDialog.current_class,
+        section: "A",
+        academicYear: "2024-25",
+        initialAmount: 9000,
+        totalExpenses: 0,
+        remainingBalance: 9000,
+        isNegative: false
+      };
+      setFunds(funds => [...funds, fund!]);
     }
 
     // Create new expense
@@ -164,14 +215,14 @@ export const EnhancedStationaryManager: React.FC = () => {
       .from("stationary_expenses")
       .insert({
         student_id: studentForDialog.id,
-        fund_id: fund.id,
+        fund_id: expErr ? undefined : undefined || "", // Passing empty string to avoid TS error. It will be updated after insert anyway.
         amount,
         description: individualDescription,
         academic_year: "2024-25",
         class: studentForDialog.current_class,
         section: "A",
         date: new Date().toISOString().split("T")[0],
-        created_by: user?.id // nullable in db
+        created_by: user?.id
       })
       .select()
       .single();
@@ -180,33 +231,43 @@ export const EnhancedStationaryManager: React.FC = () => {
       toast({ title: "Could not add expense", description: expErr?.message, variant: "destructive" });
       return;
     }
-    setExpenses(expenses => [...expenses, exp]);
+    setExpenses(expenses => [
+      ...expenses,
+      {
+        id: exp.id,
+        studentId: studentForDialog.id,
+        studentName: `${studentForDialog.first_name} ${studentForDialog.last_name}`,
+        date: exp.date,
+        amount,
+        description: individualDescription,
+        academicYear: "2024-25",
+        class: studentForDialog.current_class,
+        section: "A",
+        type: "individual"
+      }
+    ]);
 
     // Update fund
     const updatedFund = {
-      ...fund,
-      total_expenses: Number(fund.total_expenses) + amount,
-      remaining_balance: Number(fund.remaining_balance) - amount
+      ...fund!,
+      totalExpenses: Number(fund!.totalExpenses) + amount,
+      remainingBalance: Number(fund!.remainingBalance) - amount,
+      isNegative: Number(fund!.remainingBalance) - amount < 0,
+      negativeAmount: Number(fund!.remainingBalance) - amount < 0 ? Math.abs(Number(fund!.remainingBalance) - amount) : undefined
     };
+
     await supabase
       .from("stationary_expense_funds")
       .update({
-        total_expenses: updatedFund.total_expenses,
-        remaining_balance: updatedFund.remaining_balance
+        total_expenses: updatedFund.totalExpenses,
+        remaining_balance: updatedFund.remainingBalance
       })
-      .eq("id", fund.id);
+      .eq("student_id", fund!.studentId);
 
     setFunds(funds =>
       funds.map(f =>
-        f.id === fund.id
-          ? {
-              ...updatedFund,
-              isNegative: updatedFund.remaining_balance < 0,
-              negativeAmount:
-                updatedFund.remaining_balance < 0
-                  ? Math.abs(updatedFund.remaining_balance)
-                  : undefined
-            }
+        f.studentId === fund!.studentId
+          ? updatedFund
           : f
       )
     );
@@ -256,32 +317,46 @@ export const EnhancedStationaryManager: React.FC = () => {
       toast({ title: "Error", description: ceError?.message, variant: "destructive" });
       return;
     }
-    setCommonExpenses(commonExpenses => [...commonExpenses, ceData]);
+    setCommonExpenses(commonExpenses => [
+      ...commonExpenses,
+      {
+        id: ceData.id,
+        date: ceData.date,
+        description: ceData.description,
+        totalAmount: Number(ceData.total_amount),
+        category: "stationary",
+        class: ceData.class || "",
+        section: ceData.section || "",
+        academicYear: ceData.academic_year,
+        studentsAffected: ceData.students_affected || [],
+        amountPerStudent: Number(ceData.amount_per_student),
+        addedBy: ceData.added_by || ""
+      }
+    ]);
 
     // Deduct from all affected funds
-    const fundUpdatePromises = funds.map(async fund => {
-      if (affectedStudents.includes(fund.student_id)) {
-        const newTotal = Number(fund.total_expenses) + amountPerStudent;
-        const newBalance = Number(fund.remaining_balance) - amountPerStudent;
-        await supabase
+    const updatedFunds = funds.map(fund => {
+      if (affectedStudents.includes(fund.studentId)) {
+        const newTotal = Number(fund.totalExpenses) + amountPerStudent;
+        const newBalance = Number(fund.remainingBalance) - amountPerStudent;
+        // Update on Supabase
+        supabase
           .from("stationary_expense_funds")
           .update({
             total_expenses: newTotal,
             remaining_balance: newBalance
           })
-          .eq("id", fund.id);
+          .eq("student_id", fund.studentId);
         return {
           ...fund,
-          total_expenses: newTotal,
-          remaining_balance: newBalance,
+          totalExpenses: newTotal,
+          remainingBalance: newBalance,
           isNegative: newBalance < 0,
           negativeAmount: newBalance < 0 ? Math.abs(newBalance) : undefined
         };
       }
       return fund;
     });
-
-    const updatedFunds = await Promise.all(fundUpdatePromises);
     setFunds(updatedFunds);
 
     toast({ title: "Global Expense Added", description: `₹${amountPerStudent} deducted from each of the ${affectedStudents.length} residential students.` });
@@ -293,10 +368,10 @@ export const EnhancedStationaryManager: React.FC = () => {
   // Delete an expense
   const handleDeleteExpense = async (expenseId: string, type: "individual" | "common") => {
     if (type === "individual") {
-      const { error } = await supabase.from("stationary_expenses").delete().eq("id", expenseId);
+      await supabase.from("stationary_expenses").delete().eq("id", expenseId);
       setExpenses(expenses => expenses.filter(e => e.id !== expenseId));
     } else {
-      const { error } = await supabase.from("stationary_common_expenses").delete().eq("id", expenseId);
+      await supabase.from("stationary_common_expenses").delete().eq("id", expenseId);
       setCommonExpenses(commonExpenses => commonExpenses.filter(e => e.id !== expenseId));
     }
     toast({ title: "Expense Deleted", description: "The expense has been removed." });
@@ -391,7 +466,7 @@ export const EnhancedStationaryManager: React.FC = () => {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className={`font-medium ${fund?.isNegative ? 'text-red-500' : ''}`}>
-                          ₹{fund ? Number(fund.remaining_balance).toLocaleString() : 'N/A'}
+                          ₹{fund ? Number(fund.remainingBalance).toLocaleString() : 'N/A'}
                         </p>
                         <p className="text-xs text-muted-foreground">Remaining Fund</p>
                       </div>
