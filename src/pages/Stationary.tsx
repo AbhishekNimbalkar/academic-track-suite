@@ -8,11 +8,14 @@ import { EnhancedStationaryManager } from "@/components/expenses/EnhancedStation
 const Stationary: React.FC = () => {
   const { hasPermission } = useAuth();
 
-  // Allow admin (manage_stationary), residential viewer, or stationery (stationary_add_expense)
+  // Allow admin (manage_stationary), residential viewer, stationery (stationary_add_expense), or medical (manage_medical_expenses/view_medical_reports/add_medical_records)
   if (
     !hasPermission("manage_stationary") &&
     !hasPermission("view_residential_students") &&
-    !hasPermission("stationary_add_expense")
+    !hasPermission("stationary_add_expense") &&
+    !hasPermission("manage_medical_expenses") &&
+    !hasPermission("view_medical_reports") &&
+    !hasPermission("add_medical_records")
   ) {
     return <Navigate to="/dashboard" replace />;
   }
