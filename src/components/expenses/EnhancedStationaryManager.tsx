@@ -89,6 +89,7 @@ export const EnhancedStationaryManager: React.FC = () => {
   };
 
   const loadMockStudents = () => {
+    // Ensure IDs match the funds below (id and studentId)
     const mockStudents: Student[] = [
       { id: "STU001", student_id: "STU001", first_name: "John", last_name: "Doe", current_class: "10", residential_type: "residential" },
       { id: "STU002", student_id: "STU002", first_name: "Jane", last_name: "Smith", current_class: "10", residential_type: "residential" },
@@ -101,11 +102,14 @@ export const EnhancedStationaryManager: React.FC = () => {
   };
 
   const loadMockData = () => {
+    // Make sure funds use the same id as Student.id for studentId
     const mockFunds: ExpenseFund[] = [
       { studentId: "STU001", studentName: "John Doe", class: "10", section: "A", academicYear: "2024-25", initialAmount: 9000, totalExpenses: 2500, remainingBalance: 6500, isNegative: false },
       { studentId: "STU002", studentName: "Jane Smith", class: "10", section: "A", academicYear: "2024-25", initialAmount: 7000, totalExpenses: 7500, remainingBalance: -500, isNegative: true, negativeAmount: 500 },
       { studentId: "STU003", studentName: "Mike Johnson", class: "9", section: "A", academicYear: "2024-25", initialAmount: 9000, totalExpenses: 3000, remainingBalance: 6000, isNegative: false },
       { studentId: "STU004", studentName: "Sarah Wilson", class: "11", section: "A", academicYear: "2024-25", initialAmount: 9000, totalExpenses: 1000, remainingBalance: 8000, isNegative: false },
+      { studentId: "STU005", studentName: "Alex Brown", class: "1", section: "A", academicYear: "2024-25", initialAmount: 9000, totalExpenses: 2000, remainingBalance: 7000, isNegative: false },
+      { studentId: "STU006", studentName: "Emily Davis", class: "12", section: "A", academicYear: "2024-25", initialAmount: 9000, totalExpenses: 1000, remainingBalance: 8000, isNegative: false }
     ];
     setFunds(mockFunds);
 
@@ -335,7 +339,13 @@ export const EnhancedStationaryManager: React.FC = () => {
                                       Remaining Fund: ₹{fund.remainingBalance.toLocaleString()}
                                     </>
                                   ) : (
-                                    <>Fund: N/A</>
+                                    <>
+                                      Fund: N/A
+                                      <span className="text-xs text-orange-500 block">
+                                        {/* Debug warning if you want to see why */}
+                                        (No fund found for ID: {student.id})
+                                      </span>
+                                    </>
                                   )}
                                 </p>
                             </div>
@@ -390,3 +400,5 @@ export const EnhancedStationaryManager: React.FC = () => {
     </div>
   );
 };
+
+export default EnhancedStationaryManager;
