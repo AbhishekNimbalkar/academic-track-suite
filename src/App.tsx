@@ -28,6 +28,7 @@ import MyClasses from "./pages/MyClasses";
 import Applications from "./pages/Applications";
 import NotFound from "./pages/NotFound";
 import Classes from "./pages/Classes";
+import Medical from "./pages/Medical";
 
 const queryClient = new QueryClient();
 
@@ -254,6 +255,14 @@ function App() {
                     <Classes />
                   </ProtectedRoute>
                 } 
+              />
+              <Route 
+                path="/medical" 
+                element={
+                  <ProtectedRoute>
+                    <Medical />
+                  </ProtectedRoute>
+                }
               />
               
               {/* 404 route */}
