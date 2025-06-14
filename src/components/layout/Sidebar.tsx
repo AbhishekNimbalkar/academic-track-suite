@@ -1,3 +1,4 @@
+
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,12 @@ export const Sidebar: React.FC = () => {
     { label: "Applications", path: "/applications", icon: <FileText size={18} /> },
   ];
 
+  // Add menu for stationary role
+  const stationaryMenuItems = [
+    { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
+    { label: "Stationary", path: "/stationary", icon: <PiggyBank size={18} /> },
+  ];
+
   let menuItems;
   switch (userRole) {
     case "admin":
@@ -46,6 +53,9 @@ export const Sidebar: React.FC = () => {
       break;
     case "teacher":
       menuItems = teacherMenuItems;
+      break;
+    case "stationary":
+      menuItems = stationaryMenuItems;
       break;
     default:
       menuItems = [];
@@ -57,6 +67,8 @@ export const Sidebar: React.FC = () => {
         return "Administrator";
       case "teacher":
         return "Teacher";
+      case "stationary":
+        return "Stationary Manager";
       default:
         return role?.charAt(0).toUpperCase() + role?.slice(1) || "";
     }
