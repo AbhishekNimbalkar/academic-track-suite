@@ -49,7 +49,11 @@ export const AddExamForm: React.FC = () => {
   });
 
   async function onSubmit(values: AddExamSchemaType) {
-    if (!user) return;
+    if (!user?.id) return;
+    // Convert Date to yyyy-MM-dd string for Supabase
+    const exam_date_str = values.exam_date
+      ? values.exam_date.toISOString().split('T')[0]
+      : null;
     const { error } = await supabase
       .from("exams")
       .insert({
@@ -58,7 +62,7 @@ export const AddExamForm: React.FC = () => {
         medium: values.medium,
         passing_marks: values.passing_marks,
         total_marks: values.total_marks,
-        exam_date: values.exam_date,
+        exam_date: exam_date_str,
         created_by: user.id,
       });
     if (error) {

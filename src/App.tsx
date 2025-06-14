@@ -29,6 +29,7 @@ import Applications from "./pages/Applications";
 import NotFound from "./pages/NotFound";
 import Classes from "./pages/Classes";
 import Medical from "./pages/Medical";
+import ExamManagement from "./pages/ExamManagement";
 
 const queryClient = new QueryClient();
 
@@ -261,6 +262,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Medical />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/exam-management"
+                element={
+                  <ProtectedRoute>
+                    <ExamManagement />
                   </ProtectedRoute>
                 }
               />

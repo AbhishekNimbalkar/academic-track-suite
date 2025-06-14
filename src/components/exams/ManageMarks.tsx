@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -99,14 +98,13 @@ export const ManageMarks: React.FC = () => {
 
   // Save individual
   const saveMark = async (studentId: string) => {
-    if (!user || !subjectSelected || !examSelected) return;
+    if (!user?.id || !subjectSelected || !examSelected) return;
     const val = marks[studentId];
     if (typeof val !== "number" || val < 0 || (totalMarks && val > totalMarks)) {
       toast({ title: "Validation", description: "Enter a valid number!" });
       return;
     }
     setSaving(true);
-    // Use marks table (Insert or Update)
     const { error } = await supabase
       .from("marks")
       .upsert({
@@ -116,8 +114,8 @@ export const ManageMarks: React.FC = () => {
         exam_type: examSelected,
         subject: subjectSelected,
         created_by: user.id,
-        academic_year: (new Date()).getFullYear().toString(), // adjust per your schema
-      }, { onConflict: ["student_id", "exam_type", "subject"] });
+        academic_year: (new Date()).getFullYear().toString(),
+      }, { onConflict: "student_id,exam_type,subject" });
     setSaving(false);
     if (error) {
       toast({ title: "Error", description: error.message });
@@ -128,7 +126,7 @@ export const ManageMarks: React.FC = () => {
 
   // Save all
   const saveAll = async () => {
-    if (!user || studentsList.length === 0) return;
+    if (!user?.id || studentsList.length === 0) return;
     setSaving(true);
     for (const student of studentsList) {
       const val = marks[student.id];
@@ -143,7 +141,7 @@ export const ManageMarks: React.FC = () => {
           subject: subjectSelected,
           created_by: user.id,
           academic_year: (new Date()).getFullYear().toString(),
-        }, { onConflict: ["student_id", "exam_type", "subject"] });
+        }, { onConflict: "student_id,exam_type,subject" });
     }
     setSaving(false);
     toast({ title: "Success", description: "Marks updated for all students." });
