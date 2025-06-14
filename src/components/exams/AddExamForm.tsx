@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const classes = [
   "UKG", "LKG", ...Array.from({length: 12}, (_, i) => i === 10 ? "11th (Arts Premilitary College)" : `${i + 1}th`)
@@ -32,6 +34,7 @@ type AddExamSchemaType = z.infer<typeof AddExamSchema>;
 
 export const AddExamForm: React.FC = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<AddExamSchemaType>({
     resolver: zodResolver(AddExamSchema),
@@ -46,9 +49,36 @@ export const AddExamForm: React.FC = () => {
   });
 
   async function onSubmit(values: AddExamSchemaType) {
-    // UI only - just show success message
-    toast({ title: "Success", description: "Exam added successfully!" });
-    form.reset();
+    if (!user) {
+      toast({ title: "Error", description: "You must be logged in to add exams." });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('exams')
+        .insert([{
+          exam_name: values.exam_name,
+          class: values.class,
+          medium: values.medium,
+          passing_marks: values.passing_marks,
+          total_marks: values.total_marks,
+          exam_date: values.exam_date.toISOString().split('T')[0],
+          created_by: user.id
+        }]);
+
+      if (error) {
+        console.error('Error adding exam:', error);
+        toast({ title: "Error", description: "Failed to add exam. Please try again." });
+        return;
+      }
+
+      toast({ title: "Success", description: "Exam added successfully!" });
+      form.reset();
+    } catch (error) {
+      console.error('Error adding exam:', error);
+      toast({ title: "Error", description: "Failed to add exam. Please try again." });
+    }
   }
 
   return (

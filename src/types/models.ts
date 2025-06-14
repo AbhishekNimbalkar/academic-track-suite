@@ -310,3 +310,27 @@ export interface TeacherClassAssignment {
   assignedAt: string;
   assignedBy?: string;
 }
+
+// Add exam-related interfaces
+export interface Exam {
+  id: string;
+  exam_name: string;
+  class: string;
+  medium: string;
+  passing_marks: number;
+  total_marks: number;
+  exam_date: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface ExamMark {
+  id: string;
+  exam_id: string;
+  student_id: string;
+  subject: string;
+  marks_obtained: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}

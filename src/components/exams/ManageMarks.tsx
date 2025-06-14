@@ -3,70 +3,146 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const classes = [
   "UKG", "LKG", ...Array.from({length: 12}, (_, i) => i === 10 ? "11th (Arts Premilitary College)" : `${i + 1}th`)
 ];
 const mediums = ["Marathi", "Semi-English"];
 
-// Mock data for UI demonstration
-const mockExams = [
-  { id: "1", exam_name: "FA1", class: "1st", medium: "Marathi" },
-  { id: "2", exam_name: "SA1", class: "1st", medium: "Marathi" },
-  { id: "3", exam_name: "Unit Test", class: "2nd", medium: "Semi-English" },
-];
+// Predefined subjects list
+const subjectsList = ["English", "Mathematics", "Science", "Social Studies", "Marathi", "Hindi", "Physical Education"];
 
-const mockSubjects = ["English", "Mathematics", "Science", "Social Studies", "Marathi"];
+interface Exam {
+  id: string;
+  exam_name: string;
+  class: string;
+  medium: string;
+  total_marks: number;
+}
 
-const mockStudents = [
-  { id: "1", student_id: "STU001", first_name: "Rahul", last_name: "Sharma" },
-  { id: "2", student_id: "STU002", first_name: "Priya", last_name: "Patel" },
-  { id: "3", student_id: "STU003", first_name: "Amit", last_name: "Kumar" },
-];
+interface Student {
+  id: string;
+  student_id: string;
+  first_name: string;
+  last_name: string;
+}
 
 export const ManageMarks: React.FC = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Step selectors
   const [classSelected, setClassSelected] = useState("");
   const [mediumSelected, setMediumSelected] = useState("Marathi");
   const [examSelected, setExamSelected] = useState("");
   const [subjectSelected, setSubjectSelected] = useState("");
-  const [examsList, setExamsList] = useState<any[]>([]);
-  const [subjectsList, setSubjectsList] = useState<string[]>([]);
-  const [studentsList, setStudentsList] = useState<any[]>([]);
+  const [examsList, setExamsList] = useState<Exam[]>([]);
+  const [studentsList, setStudentsList] = useState<Student[]>([]);
   const [marks, setMarks] = useState<Record<string, number | "">>({});
+  const [existingMarks, setExistingMarks] = useState<Record<string, number>>({});
   const [totalMarks, setTotalMarks] = useState<number | null>(100);
   const [saving, setSaving] = useState(false);
 
-  // Mock data filtering based on selections
+  // Fetch exams based on class and medium selection
   useEffect(() => {
-    if (classSelected && mediumSelected) {
-      const filteredExams = mockExams.filter(
-        exam => exam.class === classSelected && exam.medium === mediumSelected
-      );
-      setExamsList(filteredExams);
-    } else {
-      setExamsList([]);
-      setExamSelected("");
-    }
+    const fetchExams = async () => {
+      if (classSelected && mediumSelected) {
+        try {
+          const { data, error } = await supabase
+            .from('exams')
+            .select('*')
+            .eq('class', classSelected)
+            .eq('medium', mediumSelected);
+
+          if (error) {
+            console.error('Error fetching exams:', error);
+            return;
+          }
+
+          setExamsList(data || []);
+        } catch (error) {
+          console.error('Error fetching exams:', error);
+        }
+      } else {
+        setExamsList([]);
+        setExamSelected("");
+      }
+    };
+
+    fetchExams();
   }, [classSelected, mediumSelected]);
 
+  // Fetch students based on class selection
   useEffect(() => {
-    if (examSelected) {
-      setSubjectsList(mockSubjects);
-    } else {
-      setSubjectsList([]);
-    }
-  }, [examSelected]);
+    const fetchStudents = async () => {
+      if (classSelected) {
+        try {
+          const { data, error } = await supabase
+            .from('students')
+            .select('id, student_id, first_name, last_name')
+            .eq('current_class', classSelected);
 
+          if (error) {
+            console.error('Error fetching students:', error);
+            return;
+          }
+
+          setStudentsList(data || []);
+        } catch (error) {
+          console.error('Error fetching students:', error);
+        }
+      } else {
+        setStudentsList([]);
+      }
+    };
+
+    fetchStudents();
+  }, [classSelected]);
+
+  // Fetch existing marks when exam and subject are selected
   useEffect(() => {
-    if (classSelected && subjectSelected) {
-      setStudentsList(mockStudents);
-    } else {
-      setStudentsList([]);
+    const fetchExistingMarks = async () => {
+      if (examSelected && subjectSelected) {
+        try {
+          const { data, error } = await supabase
+            .from('exam_marks')
+            .select('student_id, marks_obtained')
+            .eq('exam_id', examSelected)
+            .eq('subject', subjectSelected);
+
+          if (error) {
+            console.error('Error fetching existing marks:', error);
+            return;
+          }
+
+          const marksMap: Record<string, number> = {};
+          const inputMarksMap: Record<string, number> = {};
+          
+          data?.forEach(mark => {
+            marksMap[mark.student_id] = mark.marks_obtained;
+            inputMarksMap[mark.student_id] = mark.marks_obtained;
+          });
+
+          setExistingMarks(marksMap);
+          setMarks(inputMarksMap);
+        } catch (error) {
+          console.error('Error fetching existing marks:', error);
+        }
+      }
+    };
+
+    fetchExistingMarks();
+  }, [examSelected, subjectSelected]);
+
+  // Set total marks when exam is selected
+  useEffect(() => {
+    const selectedExam = examsList.find(exam => exam.id === examSelected);
+    if (selectedExam) {
+      setTotalMarks(selectedExam.total_marks);
     }
-  }, [classSelected, subjectSelected]);
+  }, [examSelected, examsList]);
 
   // Handle per student input
   const handleMarkChange = (studentId: string, val: string) => {
@@ -77,32 +153,103 @@ export const ManageMarks: React.FC = () => {
     }
   };
 
-  // Save individual (UI only)
+  // Save individual mark
   const saveMark = async (studentId: string) => {
+    if (!user || !examSelected || !subjectSelected) {
+      toast({ title: "Error", description: "Please ensure all selections are made." });
+      return;
+    }
+
     const val = marks[studentId];
     if (typeof val !== "number" || val < 0 || (totalMarks && val > totalMarks)) {
       toast({ title: "Validation", description: "Enter a valid number!" });
       return;
     }
+
     setSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('exam_marks')
+        .upsert([{
+          exam_id: examSelected,
+          student_id: studentId,
+          subject: subjectSelected,
+          marks_obtained: val,
+          created_by: user.id
+        }], {
+          onConflict: 'exam_id,student_id,subject'
+        });
+
+      if (error) {
+        console.error('Error saving mark:', error);
+        toast({ title: "Error", description: "Failed to save mark. Please try again." });
+        return;
+      }
+
+      // Update existing marks state
+      setExistingMarks(prev => ({ ...prev, [studentId]: val }));
+      toast({ title: "Success", description: "Mark saved successfully!" });
+    } catch (error) {
+      console.error('Error saving mark:', error);
+      toast({ title: "Error", description: "Failed to save mark. Please try again." });
+    } finally {
       setSaving(false);
-      toast({ title: "Saved", description: `Mark saved for student.` });
-    }, 500);
+    }
   };
 
-  // Save all (UI only)
+  // Save all marks
   const saveAll = async () => {
-    if (studentsList.length === 0) return;
+    if (!user || !examSelected || !subjectSelected || studentsList.length === 0) {
+      toast({ title: "Error", description: "Please ensure all selections are made." });
+      return;
+    }
+
     setSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const marksToSave = Object.entries(marks)
+        .filter(([_, mark]) => typeof mark === "number" && mark >= 0 && (totalMarks === null || mark <= totalMarks))
+        .map(([studentId, mark]) => ({
+          exam_id: examSelected,
+          student_id: studentId,
+          subject: subjectSelected,
+          marks_obtained: mark as number,
+          created_by: user.id
+        }));
+
+      if (marksToSave.length === 0) {
+        toast({ title: "Warning", description: "No valid marks to save." });
+        setSaving(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('exam_marks')
+        .upsert(marksToSave, {
+          onConflict: 'exam_id,student_id,subject'
+        });
+
+      if (error) {
+        console.error('Error saving marks:', error);
+        toast({ title: "Error", description: "Failed to save marks. Please try again." });
+        return;
+      }
+
+      // Update existing marks state
+      const newExistingMarks = { ...existingMarks };
+      marksToSave.forEach(mark => {
+        newExistingMarks[mark.student_id] = mark.marks_obtained;
+      });
+      setExistingMarks(newExistingMarks);
+
+      toast({ title: "Success", description: "All marks updated successfully!" });
+    } catch (error) {
+      console.error('Error saving marks:', error);
+      toast({ title: "Error", description: "Failed to save marks. Please try again." });
+    } finally {
       setSaving(false);
-      toast({ title: "Success", description: "Marks updated for all students." });
-    }, 1000);
+    }
   };
 
   return (

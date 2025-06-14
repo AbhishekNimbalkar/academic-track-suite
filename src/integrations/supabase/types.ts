@@ -66,6 +66,47 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_marks: {
+        Row: {
+          created_at: string
+          created_by: string
+          exam_id: string
+          id: string
+          marks_obtained: number
+          student_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          exam_id: string
+          id?: string
+          marks_obtained: number
+          student_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          exam_id?: string
+          id?: string
+          marks_obtained?: number
+          student_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_marks_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exams: {
         Row: {
           class: string
