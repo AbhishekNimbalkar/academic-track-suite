@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,6 +74,7 @@ export const EnhancedStationaryManager: React.FC = () => {
   // Dialog states
   const [isIndividualDialogOpen, setIsIndividualDialogOpen] = useState(false);
   const [isCommonDialogOpen, setIsCommonDialogOpen] = useState(false);
+  const [isCustomDialogOpen, setIsCustomDialogOpen] = useState(false);
   
   // Form states
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -82,6 +82,8 @@ export const EnhancedStationaryManager: React.FC = () => {
   const [individualDescription, setIndividualDescription] = useState("");
   const [commonAmount, setCommonAmount] = useState("");
   const [commonDescription, setCommonDescription] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
 
   useEffect(() => {
     loadData();
@@ -428,6 +430,72 @@ export const EnhancedStationaryManager: React.FC = () => {
     setIsCommonDialogOpen(false);
   };
 
+  const handleAddCustomExpense = () => {
+    if (!customAmount || !customDescription) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const totalAmount = parseFloat(customAmount);
+    const affectedStudents = students;
+
+    if (affectedStudents.length === 0) {
+      toast({
+        title: "No Students",
+        description: "There are no residential students to apply this expense to.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const amountPerStudent = totalAmount / affectedStudents.length;
+
+    const newCommonExpense: CommonExpense = {
+      id: `CE${Date.now()}`,
+      date: new Date().toISOString().split("T")[0],
+      description: customDescription,
+      totalAmount,
+      category: "stationary",
+      class: "All",
+      section: "A",
+      academicYear: "2024-25",
+      studentsAffected: affectedStudents.map(s => s.id),
+      amountPerStudent,
+      addedBy: "Admin"
+    };
+
+    setCommonExpenses([...commonExpenses, newCommonExpense]);
+
+    const updatedFunds = funds.map(fund => {
+      if (affectedStudents.some(s => s.id === fund.studentId)) {
+        const newBalance = fund.remainingBalance - amountPerStudent;
+        return {
+          ...fund,
+          totalExpenses: fund.totalExpenses + amountPerStudent,
+          remainingBalance: newBalance,
+          isNegative: newBalance < 0,
+          negativeAmount: newBalance < 0 ? Math.abs(newBalance) : undefined
+        };
+      }
+      return fund;
+    });
+
+    setFunds(updatedFunds);
+
+    toast({
+      title: "Custom Expense Added",
+      description: `₹${totalAmount} divided among ${affectedStudents.length} residential students (₹${amountPerStudent.toFixed(2)} per student).`,
+    });
+
+    setCustomAmount("");
+    setCustomDescription("");
+    setIsCustomDialogOpen(false);
+  };
+
   const downloadMonthlyReport = () => {
     toast({
       title: "Report Downloaded",
@@ -461,6 +529,10 @@ export const EnhancedStationaryManager: React.FC = () => {
           <Button onClick={() => setIsCommonDialogOpen(true)} variant="secondary">
             <Plus className="h-4 w-4 mr-2" />
             Common Expense
+          </Button>
+          <Button onClick={() => setIsCustomDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Custom Expense
           </Button>
         </div>
       </div>
@@ -789,6 +861,56 @@ export const EnhancedStationaryManager: React.FC = () => {
             </Button>
             <Button onClick={handleAddCommonExpense}>
               Add Common Expense
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Expense Dialog */}
+      <Dialog open={isCustomDialogOpen} onOpenChange={setIsCustomDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Custom Stationary Expense</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="customAmount">Total Amount (₹)</Label>
+              <Input
+                id="customAmount"
+                type="number"
+                placeholder="Enter total amount"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customDescription">Description</Label>
+              <Textarea
+                id="customDescription"
+                placeholder="Enter expense description"
+                value={customDescription}
+                onChange={(e) => setCustomDescription(e.target.value)}
+              />
+            </div>
+
+            {students.length > 0 && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  This expense will be divided among all {students.length} residential students
+                  {customAmount && ` (₹${(parseFloat(customAmount) / students.length || 0).toFixed(2)} per student)`}
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCustomDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddCustomExpense}>
+              Add Custom Expense
             </Button>
           </DialogFooter>
         </DialogContent>
