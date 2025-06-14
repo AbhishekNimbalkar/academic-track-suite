@@ -6,6 +6,7 @@ export interface Student {
   last_name: string;
   current_class: string;
   residential_type: string;
+  stream?: string; // <-- Added to match DB and code usage
 }
 
 export interface StationaryExpense {
