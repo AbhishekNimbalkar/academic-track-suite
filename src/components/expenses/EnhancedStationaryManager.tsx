@@ -36,7 +36,10 @@ export const EnhancedStationaryManager: React.FC = () => {
   const [globalCommonAmount, setGlobalCommonAmount] = useState("");
   const [globalCommonDescription, setGlobalCommonDescription] = useState("");
 
-  const canManage = hasPermission("manage_stationary");
+  // Permissions for action logic
+  const canAdd = hasPermission("manage_stationary") || hasPermission("stationary_add_expense");
+  const canEdit = hasPermission("manage_stationary") || hasPermission("stationary_edit_expense");
+  const canDelete = hasPermission("manage_stationary") || hasPermission("stationary_delete_expense");
 
   useEffect(() => {
     loadData();
@@ -285,10 +288,13 @@ export const EnhancedStationaryManager: React.FC = () => {
               <Label htmlFor="globalAmount">Amount per Student (₹)</Label>
               <Input id="globalAmount" type="number" placeholder="e.g., 3000" value={globalCommonAmount} onChange={e => setGlobalCommonAmount(e.target.value)} />
             </div>
-            <Button onClick={handleAddGlobalCommonExpense}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Expense
-            </Button>
+            {/* Only allow add if canAdd */}
+            {canAdd && (
+              <Button onClick={handleAddGlobalCommonExpense}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Expense
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -332,9 +338,12 @@ export const EnhancedStationaryManager: React.FC = () => {
                                     <p className="text-xs text-muted-foreground">Remaining Fund</p>
                                 </div>
                                 <Button variant="outline" size="sm" onClick={() => openHistoryDialog(student)}>History</Button>
-                                <Button size="sm" onClick={() => openIndividualExpenseDialog(student)}>
+                                {/* Only allow adding if canAdd */}
+                                {canAdd && (
+                                  <Button size="sm" onClick={() => openIndividualExpenseDialog(student)}>
                                     <Plus className="h-4 w-4 mr-1" /> Add Expense
-                                </Button>
+                                  </Button>
+                                )}
                             </div>
                         </div>
                     )
@@ -364,7 +373,8 @@ export const EnhancedStationaryManager: React.FC = () => {
         student={studentForDialog}
         expenses={expenses}
         commonExpenses={commonExpenses}
-        canManage={canManage}
+        // Only admin can manage (edit/delete), not stationary
+        canManage={canEdit && canDelete}
         onDelete={handleDeleteExpense}
         onEdit={handleEditExpense}
       />

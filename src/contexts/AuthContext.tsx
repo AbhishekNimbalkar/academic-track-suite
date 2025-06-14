@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +31,10 @@ const ROLE_PERMISSIONS = {
     "manage_classes",
     "manage_subjects",
     "generate_documents",
+    "manage_stationary", // full manage ("add", "edit", "delete") for admin
+    "stationary_add_expense",
+    "stationary_edit_expense",
+    "stationary_delete_expense",
   ],
   teacher: [
     "manage_marks",
@@ -43,7 +46,7 @@ const ROLE_PERMISSIONS = {
     "view_assigned_class_only",
   ],
   stationary: [
-    "manage_stationary_expenses",
+    "stationary_add_expense",
     "view_stationary_reports",
     "add_stationary_items",
   ],
