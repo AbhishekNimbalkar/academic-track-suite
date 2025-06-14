@@ -46,6 +46,12 @@ export const Sidebar: React.FC = () => {
     { label: "Stationary", path: "/stationary", icon: <PiggyBank size={18} /> },
   ];
 
+  // Add menu for medical role
+  const medicalMenuItems = [
+    { label: "Dashboard", path: "/dashboard", icon: <BarChart size={18} /> },
+    { label: "Medical", path: "/medical", icon: <Hospital size={18} /> },
+  ];
+
   let menuItems;
   switch (userRole) {
     case "admin":
@@ -56,6 +62,9 @@ export const Sidebar: React.FC = () => {
       break;
     case "stationary":
       menuItems = stationaryMenuItems;
+      break;
+    case "medical":
+      menuItems = medicalMenuItems;
       break;
     default:
       menuItems = [];
@@ -69,6 +78,8 @@ export const Sidebar: React.FC = () => {
         return "Teacher";
       case "stationary":
         return "Stationary Manager";
+      case "medical":
+        return "Medical Manager";
       default:
         return role?.charAt(0).toUpperCase() + role?.slice(1) || "";
     }
