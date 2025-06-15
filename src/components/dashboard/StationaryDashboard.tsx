@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   DollarSign, 
@@ -15,6 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export const StationaryDashboard: React.FC = () => {
   // Mock data based on your requirements
@@ -23,7 +30,13 @@ export const StationaryDashboard: React.FC = () => {
   const totalAllocated = 50000;
   const totalExpenses = totalCommonExpenses + totalIndividualExpenses;
   const totalRemainingBalance = totalAllocated - totalExpenses;
-  const negativeBalanceStudents = 3;
+  
+  const negativeBalanceStudentDetails = [
+    { id: 1, studentName: "Rohan Verma", class: "8", balance: -250 },
+    { id: 2, studentName: "Sita Devi", class: "9", balance: -150 },
+    { id: 3, studentName: "Karan Gupta", class: "10", balance: -500 },
+  ];
+  const negativeBalanceStudents = negativeBalanceStudentDetails.length;
 
   const recentStudentExpenses = [
     { id: 1, studentName: "Ravi Kumar", item: "Graph Book", amount: 150, date: "2025-06-14", class: "10" },
@@ -32,6 +45,8 @@ export const StationaryDashboard: React.FC = () => {
     { id: 4, studentName: "Priya Das", item: "Lab Journal", amount: 180, date: "2025-06-11", class: "12" },
     { id: 5, studentName: "Amit Patel", item: "Paint Brush", amount: 120, date: "2025-06-10", class: "10" },
   ];
+
+  const [isNegativeBalanceDialogOpen, setIsNegativeBalanceDialogOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -81,7 +96,7 @@ export const StationaryDashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:bg-muted/50">
+        <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setIsNegativeBalanceDialogOpen(true)}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               Negative Balance Students
@@ -126,6 +141,37 @@ export const StationaryDashboard: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+      
+      <Dialog open={isNegativeBalanceDialogOpen} onOpenChange={setIsNegativeBalanceDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Students with Negative Balance</DialogTitle>
+            <DialogDescription>
+              List of students whose stationary expenses have exceeded their allocated funds.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student Name</TableHead>
+                  <TableHead>Class</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {negativeBalanceStudentDetails.map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell className="font-medium">{student.studentName}</TableCell>
+                    <TableCell>{student.class}</TableCell>
+                    <TableCell className="text-right text-red-500">₹{student.balance.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
