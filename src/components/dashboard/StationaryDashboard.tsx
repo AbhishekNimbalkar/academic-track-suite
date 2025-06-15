@@ -1,353 +1,158 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { 
-  DollarSign, 
-  TrendingUp, 
-  AlertTriangle, 
-  Users,
-  Calendar,
-  Eye,
-  UserCheck
+  Package, DollarSign, TrendingUp, 
+  ShoppingCart, AlertTriangle
 } from "lucide-react";
 
 export const StationaryDashboard: React.FC = () => {
-  const [selectedClass, setSelectedClass] = useState<string>("");
-  const [selectedMonth, setSelectedMonth] = useState<string>("current");
+  // Mock data for stationary dashboard
+  const totalBudget = 50000;
+  const usedBudget = 32000;
+  const remainingBudget = totalBudget - usedBudget;
+  const monthlyExpenses = 8500;
+  const itemsInStock = 45;
+  const lowStockItems = 8;
 
-  // Mock data
-  const summaryData = {
-    totalCommonExpenses: 45000,
-    totalIndividualExpenses: 32000,
-    totalRemainingBalance: 18000,
-    negativeBalanceStudents: 8
-  };
-
-  const classData = [
-    {
-      className: "Class 10-A",
-      studentCount: 35,
-      commonExpenses: 12000,
-      individualExpenses: 8500,
-      remainingBalance: 4500
-    },
-    {
-      className: "Class 10-B",
-      studentCount: 32,
-      commonExpenses: 11500,
-      individualExpenses: 7800,
-      remainingBalance: 3200
-    },
-    {
-      className: "Class 9-A",
-      studentCount: 38,
-      commonExpenses: 13200,
-      individualExpenses: 9200,
-      remainingBalance: 5800
-    },
-    {
-      className: "Class 9-B",
-      studentCount: 34,
-      commonExpenses: 8300,
-      individualExpenses: 6500,
-      remainingBalance: 4500
-    }
-  ];
-
-  const studentData = [
-    {
-      studentName: "Rahul Sharma",
-      allocatedFund: 2000,
-      usedFund: 1650,
-      commonExpenses: 450,
-      individualExpenses: 1200,
-      currentBalance: 350,
-      status: "Good"
-    },
-    {
-      studentName: "Priya Patel",
-      allocatedFund: 2000,
-      usedFund: 2150,
-      commonExpenses: 500,
-      individualExpenses: 1650,
-      currentBalance: -150,
-      status: "Due"
-    },
-    {
-      studentName: "Amit Kumar",
-      allocatedFund: 2000,
-      usedFund: 1800,
-      commonExpenses: 400,
-      individualExpenses: 1400,
-      currentBalance: 200,
-      status: "Good"
-    }
-  ];
-
-  const negativeBalanceStudents = [
-    { name: "Priya Patel", class: "Class 10-A", negativeAmount: 150 },
-    { name: "Vikram Singh", class: "Class 10-B", negativeAmount: 200 },
-    { name: "Sneha Reddy", class: "Class 9-A", negativeAmount: 75 },
-    { name: "Arjun Mehta", class: "Class 9-B", negativeAmount: 125 }
+  const recentExpenses = [
+    { id: 1, item: "Notebooks", amount: 2500, date: "2024-01-15", category: "Common" },
+    { id: 2, item: "Pencils", amount: 800, date: "2024-01-14", category: "Common" },
+    { id: 3, item: "Art Supplies", amount: 1200, date: "2024-01-13", category: "Individual" },
+    { id: 4, item: "Chart Papers", amount: 600, date: "2024-01-12", category: "Common" },
+    { id: 5, item: "Markers", amount: 950, date: "2024-01-11", category: "Common" },
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Summary Cards */}
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-white shadow-sm border">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Common Expenses
+            <CardTitle className="text-sm font-medium">
+              Total Budget
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">₹{summaryData.totalCommonExpenses.toLocaleString()}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Shared across all students
+            <div className="text-2xl font-bold">₹{totalBudget.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Annual stationary budget
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm border">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Individual Expenses
+            <CardTitle className="text-sm font-medium">
+              Used Budget
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">₹{summaryData.totalIndividualExpenses.toLocaleString()}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Student-specific purchases
+            <div className="text-2xl font-bold">₹{usedBudget.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {Math.round((usedBudget / totalBudget) * 100)}% of total budget
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm border">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Remaining Balance
+            <CardTitle className="text-sm font-medium">
+              Items in Stock
             </CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">₹{summaryData.totalRemainingBalance.toLocaleString()}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Available for future expenses
+            <div className="text-2xl font-bold">{itemsInStock}</div>
+            <p className="text-xs text-muted-foreground">
+              Different stationary items
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm border cursor-pointer hover:shadow-md transition-shadow">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Negative Balance Students
+            <CardTitle className="text-sm font-medium">
+              Low Stock Alert
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{summaryData.negativeBalanceStudents}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Click to view details
+            <div className="text-2xl font-bold text-orange-500">{lowStockItems}</div>
+            <p className="text-xs text-muted-foreground">
+              Items need restocking
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters Section */}
-      <Card className="bg-white shadow-sm border">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Time Period</label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="current">Current Month</SelectItem>
-                  <SelectItem value="last">Last Month</SelectItem>
-                  <SelectItem value="quarter">This Quarter</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Class</label>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Classes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Classes</SelectItem>
-                  <SelectItem value="10-A">Class 10-A</SelectItem>
-                  <SelectItem value="10-B">Class 10-B</SelectItem>
-                  <SelectItem value="9-A">Class 9-A</SelectItem>
-                  <SelectItem value="9-B">Class 9-B</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Student</label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Students" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Students</SelectItem>
-                  <SelectItem value="rahul">Rahul Sharma</SelectItem>
-                  <SelectItem value="priya">Priya Patel</SelectItem>
-                  <SelectItem value="amit">Amit Kumar</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Class-wise Expense Table */}
-      <Card className="bg-white shadow-sm border">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Class-wise Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Class</TableHead>
-                <TableHead>Students</TableHead>
-                <TableHead>Common Expenses</TableHead>
-                <TableHead>Individual Expenses</TableHead>
-                <TableHead>Remaining Balance</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {classData.map((classItem, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{classItem.className}</TableCell>
-                  <TableCell>{classItem.studentCount} students</TableCell>
-                  <TableCell>₹{classItem.commonExpenses.toLocaleString()}</TableCell>
-                  <TableCell>₹{classItem.individualExpenses.toLocaleString()}</TableCell>
-                  <TableCell>₹{classItem.remainingBalance.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-1" />
-                      View Details
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Student-wise Expense Table (shown when class is selected) */}
-      {selectedClass && (
-        <Card className="bg-white shadow-sm border">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Student-wise Expenses - Class {selectedClass}</CardTitle>
+            <CardTitle>Budget Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Allocated Fund</TableHead>
-                  <TableHead>Used Fund</TableHead>
-                  <TableHead>Common Expenses</TableHead>
-                  <TableHead>Individual Expenses</TableHead>
-                  <TableHead>Current Balance</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {studentData.map((student, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{student.studentName}</TableCell>
-                    <TableCell>₹{student.allocatedFund.toLocaleString()}</TableCell>
-                    <TableCell>₹{student.usedFund.toLocaleString()}</TableCell>
-                    <TableCell>₹{student.commonExpenses.toLocaleString()}</TableCell>
-                    <TableCell>₹{student.individualExpenses.toLocaleString()}</TableCell>
-                    <TableCell className={student.currentBalance < 0 ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>
-                      ₹{student.currentBalance.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={student.status === "Good" ? "default" : "destructive"}>
-                        {student.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Negative Balance Alert Section */}
-      <Card className="bg-red-50 border-red-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-red-800 flex items-center">
-            <AlertTriangle className="h-5 w-5 mr-2" />
-            Students with Negative Balance
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {negativeBalanceStudents.map((student, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
-                <div className="flex items-center space-x-3">
-                  <UserCheck className="h-5 w-5 text-red-600" />
-                  <div>
-                    <p className="font-medium text-gray-900">{student.name}</p>
-                    <p className="text-sm text-gray-600">{student.class}</p>
-                  </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Used Budget</span>
+                  <span>₹{usedBudget.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <span className="text-red-600 font-semibold">
-                    -₹{student.negativeAmount.toLocaleString()}
-                  </span>
-                  <div className="space-x-2">
-                    <Button variant="outline" size="sm">
-                      Adjust
-                    </Button>
-                    <Button variant="default" size="sm">
-                      Notify
-                    </Button>
-                  </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full" 
+                    style={{ width: `${(usedBudget / totalBudget) * 100}%` }}
+                  ></div>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Remaining Budget</span>
+                  <span>₹{remainingBudget.toLocaleString()}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-green-600 h-2 rounded-full" 
+                    style={{ width: `${(remainingBudget / totalBudget) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <div className="flex justify-between font-medium">
+                  <span>This Month's Expenses</span>
+                  <span>₹{monthlyExpenses.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Expenses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentExpenses.map((expense) => (
+                <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{expense.item}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(expense.date).toLocaleDateString()} • {expense.category}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium">₹{expense.amount.toLocaleString()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
