@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { MediumFeeStructureSettings } from "@/components/settings/MediumFeeStructureSettings";
+import { AcademicFeeStructureSettings } from "@/components/settings/AcademicFeeStructureSettings";
 import {
   Settings as SettingsIcon,
   User,
@@ -315,7 +315,7 @@ const Settings: React.FC = () => {
                   </TabsContent>
                   
                   <TabsContent value="fee-structure" className="space-y-6">
-                    <MediumFeeStructureSettings />
+                    <AcademicFeeStructureSettings />
                   </TabsContent>
                 </>
               )}
