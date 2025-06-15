@@ -282,6 +282,73 @@ const FeeManagement: React.FC = () => {
     }
   };
 
+  // ===== GUARD STEPS UI - Always render only what needs to be shown for this "step" =====
+  // 1. If no studentType selected yet, show type selection only.
+  if (!studentType) {
+    return (
+      <MainLayout>
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="max-w-md w-full">
+            <Card>
+              <CardHeader>
+                <CardTitle>Select Student Type</CardTitle>
+                <CardDescription>
+                  Please select to manage Residential or Non-Residential student fees.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <Button onClick={() => setStudentType('residential')} className="w-full">
+                  Residential Students
+                </Button>
+                <Button onClick={() => setStudentType('non-residential')} className="w-full">
+                  Non-Residential Students
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // 2. If residential but no class picked yet, show only class selection (plus back)
+  if (studentType === 'residential' && !selectedClass) {
+    return (
+      <MainLayout>
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="max-w-md w-full">
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2">
+                <Button variant="outline" size="icon" onClick={() => setStudentType(null)} aria-label="Back to selection">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div>
+                  <CardTitle>Select Class</CardTitle>
+                  <CardDescription>
+                    Choose a class to begin managing residential student fees.
+                  </CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Select onValueChange={setSelectedClass}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.className}>{cls.className}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // ======= Main Fee Management UI (only shown after both steps are satisfied) =======
   return (
     <MainLayout>
       <div className="space-y-6">
