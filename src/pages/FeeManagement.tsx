@@ -65,11 +65,11 @@ const FeeManagement: React.FC = () => {
       const allFees = dataService.getFees();
       const allStudents = dataService.getStudents();
       const enrichedFees: EnrichedFee[] = allFees.map(fee => {
-        const student = allStudents.find(s => s.studentId === fee.studentId);
+        const student = allStudents.find(s => s.id === fee.studentId);
         return {
           ...fee,
-          class: student ? student.current_class : '',
-          residentialType: student ? student.residential_type : 'non-residential',
+          class: student ? student.class : '',
+          residentialType: student ? student.residentialType || 'non-residential' : 'non-residential',
         };
       });
       setFees(enrichedFees);
