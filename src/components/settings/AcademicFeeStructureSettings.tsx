@@ -26,7 +26,7 @@ interface FeeStructure {
   id: string;
   academicYear: string;
   className: string;
-  medium: string;
+  residentialType: string;
   studentFee: number;
   medicalStationaryPool: number;
   createdAt: string;
@@ -37,40 +37,38 @@ export const AcademicFeeStructureSettings: React.FC = () => {
   const { toast } = useToast();
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([]);
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
-  const [availableMedia, setAvailableMedia] = useState<string[]>([]);
   
   const [newFee, setNewFee] = useState({
     academicYear: "2024-25",
     className: "",
-    medium: "",
+    residentialType: "",
     studentFee: 9000,
     medicalStationaryPool: 2000,
   });
 
+  const residentialTypes = ["Residential", "Non-Residential"];
+
   useEffect(() => {
-    fetchClassesAndMedia();
+    fetchClasses();
     loadFeeStructures();
   }, []);
 
-  const fetchClassesAndMedia = async () => {
+  const fetchClasses = async () => {
     try {
       const { data, error } = await supabase
         .from('classes')
-        .select('class_name, medium')
+        .select('class_name')
         .order('class_name');
       
       if (error) throw error;
       
       const classes = [...new Set(data.map(cls => cls.class_name))];
-      const media = [...new Set(data.map(cls => cls.medium))];
-      
       setAvailableClasses(classes);
-      setAvailableMedia(media);
     } catch (error) {
-      console.error('Error fetching classes and media:', error);
+      console.error('Error fetching classes:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch classes and media.",
+        description: "Failed to fetch classes.",
         variant: "destructive",
       });
     }
@@ -89,10 +87,10 @@ export const AcademicFeeStructureSettings: React.FC = () => {
   };
 
   const handleAddFee = () => {
-    if (!newFee.className || !newFee.medium) {
+    if (!newFee.className || !newFee.residentialType) {
       toast({
         title: "Validation Error",
-        description: "Please select both class and medium.",
+        description: "Please select both class and residential type.",
         variant: "destructive",
       });
       return;
@@ -102,7 +100,7 @@ export const AcademicFeeStructureSettings: React.FC = () => {
     const exists = feeStructures.find(
       fs => fs.academicYear === newFee.academicYear && 
            fs.className === newFee.className && 
-           fs.medium === newFee.medium
+           fs.residentialType === newFee.residentialType
     );
 
     if (exists) {
@@ -118,7 +116,7 @@ export const AcademicFeeStructureSettings: React.FC = () => {
       id: `afs_${Date.now()}`,
       academicYear: newFee.academicYear,
       className: newFee.className,
-      medium: newFee.medium,
+      residentialType: newFee.residentialType,
       studentFee: newFee.studentFee,
       medicalStationaryPool: newFee.medicalStationaryPool,
       createdAt: new Date().toISOString(),
@@ -132,14 +130,14 @@ export const AcademicFeeStructureSettings: React.FC = () => {
     setNewFee({
       academicYear: "2024-25",
       className: "",
-      medium: "",
+      residentialType: "",
       studentFee: 9000,
       medicalStationaryPool: 2000,
     });
 
     toast({
       title: "Fee Structure Added",
-      description: `Fee structure for ${newFee.className} (${newFee.medium}) has been added.`,
+      description: `Fee structure for ${newFee.className} (${newFee.residentialType}) has been added.`,
     });
   };
 
@@ -185,7 +183,7 @@ export const AcademicFeeStructureSettings: React.FC = () => {
         <CardHeader>
           <CardTitle>Academic Fee Structure Management</CardTitle>
           <CardDescription>
-            Add and manage fee structures for each academic year, class, and medium
+            Add and manage fee structures for each academic year, class, and residential type
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -217,15 +215,15 @@ export const AcademicFeeStructureSettings: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="medium">Medium</Label>
-              <Select value={newFee.medium} onValueChange={(value) => setNewFee({...newFee, medium: value})}>
+              <Label htmlFor="residentialType">Residential Type</Label>
+              <Select value={newFee.residentialType} onValueChange={(value) => setNewFee({...newFee, residentialType: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a medium" />
+                  <SelectValue placeholder="Select residential type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableMedia.map((medium) => (
-                    <SelectItem key={medium} value={medium}>
-                      {medium}
+                  {residentialTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -283,7 +281,7 @@ export const AcademicFeeStructureSettings: React.FC = () => {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h4 className="font-semibold text-lg">
-                          {structure.academicYear} - Class {structure.className} ({structure.medium})
+                          {structure.academicYear} - Class {structure.className} ({structure.residentialType})
                         </h4>
                         <p className="text-sm text-muted-foreground">
                           Created on {new Date(structure.createdAt).toLocaleDateString()}
