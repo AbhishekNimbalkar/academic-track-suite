@@ -2,25 +2,35 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Package, DollarSign, TrendingUp, 
-  ShoppingCart, AlertTriangle
+  DollarSign, 
+  TrendingUp, 
+  ShoppingCart, 
+  AlertTriangle,
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const StationaryDashboard: React.FC = () => {
-  // Mock data for stationary dashboard
-  const totalBudget = 50000;
-  const usedBudget = 32000;
-  const remainingBudget = totalBudget - usedBudget;
-  const monthlyExpenses = 8500;
-  const itemsInStock = 45;
-  const lowStockItems = 8;
+  // Mock data based on your requirements
+  const totalCommonExpenses = 12500;
+  const totalIndividualExpenses = 19500;
+  const totalAllocated = 50000;
+  const totalExpenses = totalCommonExpenses + totalIndividualExpenses;
+  const totalRemainingBalance = totalAllocated - totalExpenses;
+  const negativeBalanceStudents = 3;
 
-  const recentExpenses = [
-    { id: 1, item: "Notebooks", amount: 2500, date: "2024-01-15", category: "Common" },
-    { id: 2, item: "Pencils", amount: 800, date: "2024-01-14", category: "Common" },
-    { id: 3, item: "Art Supplies", amount: 1200, date: "2024-01-13", category: "Individual" },
-    { id: 4, item: "Chart Papers", amount: 600, date: "2024-01-12", category: "Common" },
-    { id: 5, item: "Markers", amount: 950, date: "2024-01-11", category: "Common" },
+  const recentStudentExpenses = [
+    { id: 1, studentName: "Ravi Kumar", item: "Graph Book", amount: 150, date: "2025-06-14", class: "10" },
+    { id: 2, studentName: "Sunita Sharma", item: "Geometry Box", amount: 250, date: "2025-06-13", class: "9" },
+    { id: 3, studentName: "Anil Singh", item: "Crayons Set", amount: 300, date: "2025-06-12", class: "11" },
+    { id: 4, studentName: "Priya Das", item: "Lab Journal", amount: 180, date: "2025-06-11", class: "12" },
+    { id: 5, studentName: "Amit Patel", item: "Paint Brush", amount: 120, date: "2025-06-10", class: "10" },
   ];
 
   return (
@@ -29,14 +39,29 @@ export const StationaryDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Budget
+              Total Common Expenses
+            </CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{totalCommonExpenses.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Shared item expenses
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Individual Expenses
             </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{totalBudget.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{totalIndividualExpenses.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Annual stationary budget
+              Student-specific expenses
             </p>
           </CardContent>
         </Card>
@@ -44,115 +69,63 @@ export const StationaryDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Used Budget
+              Total Remaining Balance
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{usedBudget.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{totalRemainingBalance.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((usedBudget / totalBudget) * 100)}% of total budget
+              Across all student funds
             </p>
           </CardContent>
         </Card>
-
-        <Card>
+        
+        <Card className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Items in Stock
+              Negative Balance Students
             </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{itemsInStock}</div>
+            <div className="text-2xl font-bold text-red-500">{negativeBalanceStudents}</div>
             <p className="text-xs text-muted-foreground">
-              Different stationary items
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Low Stock Alert
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{lowStockItems}</div>
-            <p className="text-xs text-muted-foreground">
-              Items need restocking
+              Click to view details
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Budget Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Used Budget</span>
-                  <span>₹{usedBudget.toLocaleString()}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full" 
-                    style={{ width: `${(usedBudget / totalBudget) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Remaining Budget</span>
-                  <span>₹{remainingBudget.toLocaleString()}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-green-600 h-2 rounded-full" 
-                    style={{ width: `${(remainingBudget / totalBudget) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <div className="flex justify-between font-medium">
-                  <span>This Month's Expenses</span>
-                  <span>₹{monthlyExpenses.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Expenses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentExpenses.map((expense) => (
-                <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{expense.item}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(expense.date).toLocaleDateString()} • {expense.category}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium">₹{expense.amount.toLocaleString()}</div>
-                  </div>
-                </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Student Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student Name</TableHead>
+                <TableHead>Class</TableHead>
+                <TableHead>Item</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentStudentExpenses.map((expense) => (
+                <TableRow key={expense.id}>
+                  <TableCell className="font-medium">{expense.studentName}</TableCell>
+                  <TableCell>{expense.class}</TableCell>
+                  <TableCell>{expense.item}</TableCell>
+                  <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right">₹{expense.amount.toLocaleString()}</TableCell>
+                </TableRow>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
