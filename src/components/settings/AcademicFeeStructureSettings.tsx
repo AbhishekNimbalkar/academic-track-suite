@@ -27,8 +27,7 @@ interface FeeStructure {
   academicYear: string;
   className: string;
   medium: string;
-  newStudentFee: number;
-  oldStudentFee: number;
+  studentFee: number;
   medicalStationaryPool: number;
   createdAt: string;
   isEditing: boolean;
@@ -44,8 +43,7 @@ export const AcademicFeeStructureSettings: React.FC = () => {
     academicYear: "2024-25",
     className: "",
     medium: "",
-    newStudentFee: 9000,
-    oldStudentFee: 7000,
+    studentFee: 9000,
     medicalStationaryPool: 2000,
   });
 
@@ -121,8 +119,7 @@ export const AcademicFeeStructureSettings: React.FC = () => {
       academicYear: newFee.academicYear,
       className: newFee.className,
       medium: newFee.medium,
-      newStudentFee: newFee.newStudentFee,
-      oldStudentFee: newFee.oldStudentFee,
+      studentFee: newFee.studentFee,
       medicalStationaryPool: newFee.medicalStationaryPool,
       createdAt: new Date().toISOString(),
       isEditing: false,
@@ -136,8 +133,7 @@ export const AcademicFeeStructureSettings: React.FC = () => {
       academicYear: "2024-25",
       className: "",
       medium: "",
-      newStudentFee: 9000,
-      oldStudentFee: 7000,
+      studentFee: 9000,
       medicalStationaryPool: 2000,
     });
 
@@ -237,24 +233,14 @@ export const AcademicFeeStructureSettings: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="newStudentFee">New Student Fee (₹)</Label>
+              <Label htmlFor="studentFee">Student Fee (₹)</Label>
               <Input
-                id="newStudentFee"
+                id="studentFee"
                 type="number"
-                value={newFee.newStudentFee}
-                onChange={(e) => setNewFee({...newFee, newStudentFee: Number(e.target.value)})}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="oldStudentFee">Old Student Fee (₹)</Label>
-              <Input
-                id="oldStudentFee"
-                type="number"
-                value={newFee.oldStudentFee}
-                onChange={(e) => setNewFee({...newFee, oldStudentFee: Number(e.target.value)})}
+                value={newFee.studentFee}
+                onChange={(e) => setNewFee({...newFee, studentFee: Number(e.target.value)})}
               />
             </div>
 
@@ -333,21 +319,13 @@ export const AcademicFeeStructureSettings: React.FC = () => {
                     </div>
                     
                     {structure.isEditing ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <Label>New Student Fee (₹)</Label>
+                          <Label>Student Fee (₹)</Label>
                           <Input
                             type="number"
-                            value={structure.newStudentFee}
-                            onChange={(e) => updateFee(structure.id, 'newStudentFee', Number(e.target.value))}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label>Old Student Fee (₹)</Label>
-                          <Input
-                            type="number"
-                            value={structure.oldStudentFee}
-                            onChange={(e) => updateFee(structure.id, 'oldStudentFee', Number(e.target.value))}
+                            value={structure.studentFee}
+                            onChange={(e) => updateFee(structure.id, 'studentFee', Number(e.target.value))}
                           />
                         </div>
                         <div className="space-y-1">
@@ -360,14 +338,10 @@ export const AcademicFeeStructureSettings: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="font-medium">New Student Fee:</span>
-                          <p className="text-green-600 font-semibold">₹{structure.newStudentFee.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Old Student Fee:</span>
-                          <p className="text-blue-600 font-semibold">₹{structure.oldStudentFee.toLocaleString()}</p>
+                          <span className="font-medium">Student Fee:</span>
+                          <p className="text-green-600 font-semibold">₹{structure.studentFee.toLocaleString()}</p>
                         </div>
                         <div>
                           <span className="font-medium">Medical & Stationary Pool:</span>
