@@ -1,36 +1,100 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Heart, DollarSign, Activity, 
   AlertCircle, Users, TrendingUp
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 export const MedicalDashboard: React.FC = () => {
-  // Mock data for medical dashboard
-  const totalBudget = 75000;
-  const usedBudget = 45000;
-  const remainingBudget = totalBudget - usedBudget;
-  const monthlyExpenses = 12000;
-  const totalCheckups = 156;
-  const emergencyCases = 3;
+  const [medicalData, setMedicalData] = useState({
+    totalMedicalSpend: 0,
+    totalRemainingFunds: 0,
+    monthlySpend: 0,
+    totalCheckups: 156,
+    emergencyCases: 3,
+    recentExpenses: []
+  });
 
-  const recentMedicalRecords = [
-    { id: 1, student: "Alice Smith", type: "Regular Checkup", amount: 500, date: "2024-01-15", priority: "Low" },
-    { id: 2, student: "Bob Johnson", type: "Emergency", amount: 2500, date: "2024-01-14", priority: "High" },
-    { id: 3, student: "Carol Davis", type: "Medication", amount: 800, date: "2024-01-13", priority: "Medium" },
-    { id: 4, student: "David Wilson", type: "Regular Checkup", amount: 500, date: "2024-01-12", priority: "Low" },
-    { id: 5, student: "Emma Brown", type: "Specialist Visit", amount: 1500, date: "2024-01-11", priority: "Medium" },
-  ];
+  useEffect(() => {
+    loadMedicalData();
+  }, []);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "High": return "destructive";
-      case "Medium": return "secondary";
-      case "Low": return "default";
-      default: return "default";
+  const loadMedicalData = async () => {
+    try {
+      // Get current academic year
+      const currentYear = "2024-25";
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYearNum = currentDate.getFullYear();
+
+      // Fetch stationary expense funds (which includes medical funds)
+      const { data: funds } = await supabase
+        .from('stationary_expense_funds')
+        .select('*')
+        .eq('academic_year', currentYear);
+
+      // Calculate total remaining funds
+      const totalRemainingFunds = funds?.reduce((sum, fund) => sum + Number(fund.remaining_balance), 0) || 0;
+
+      // Mock data for medical expenses (since we don't have a separate medical expenses table yet)
+      const mockMedicalExpenses = [
+        { id: 1, studentName: "Alice Smith", amount: 500, date: "2024-01-15", description: "Regular Checkup" },
+        { id: 2, studentName: "Bob Johnson", amount: 2500, date: "2024-01-14", description: "Emergency Treatment" },
+        { id: 3, studentName: "Carol Davis", amount: 800, date: "2024-01-13", description: "Medication" },
+        { id: 4, studentName: "David Wilson", amount: 500, date: "2024-01-12", description: "Regular Checkup" },
+        { id: 5, studentName: "Emma Brown", amount: 1500, date: "2024-01-11", description: "Specialist Visit" },
+      ];
+
+      // Calculate totals from mock data
+      const totalMedicalSpend = mockMedicalExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+      
+      // Calculate monthly spend (current month)
+      const monthlySpend = mockMedicalExpenses
+        .filter(expense => {
+          const expenseDate = new Date(expense.date);
+          return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYearNum;
+        })
+        .reduce((sum, expense) => sum + expense.amount, 0);
+
+      setMedicalData({
+        totalMedicalSpend,
+        totalRemainingFunds,
+        monthlySpend,
+        totalCheckups: 156,
+        emergencyCases: 3,
+        recentExpenses: mockMedicalExpenses
+      });
+
+    } catch (error) {
+      console.error('Error loading medical data:', error);
+      // Fallback to mock data
+      setMedicalData({
+        totalMedicalSpend: 45000,
+        totalRemainingFunds: 230000,
+        monthlySpend: 12000,
+        totalCheckups: 156,
+        emergencyCases: 3,
+        recentExpenses: [
+          { id: 1, studentName: "Alice Smith", amount: 500, date: "2024-01-15", description: "Regular Checkup" },
+          { id: 2, studentName: "Bob Johnson", amount: 2500, date: "2024-01-14", description: "Emergency Treatment" },
+          { id: 3, studentName: "Carol Davis", amount: 800, date: "2024-01-13", description: "Medication" },
+          { id: 4, studentName: "David Wilson", amount: 500, date: "2024-01-12", description: "Regular Checkup" },
+          { id: 5, studentName: "Emma Brown", amount: 1500, date: "2024-01-11", description: "Specialist Visit" },
+        ]
+      });
     }
+  };
+
+  const getPriorityBadge = (description: string) => {
+    if (description.toLowerCase().includes("emergency")) {
+      return <Badge variant="destructive">Emergency</Badge>;
+    } else if (description.toLowerCase().includes("medication")) {
+      return <Badge variant="secondary">Medication</Badge>;
+    }
+    return <Badge variant="default">Checkup</Badge>;
   };
 
   return (
@@ -39,14 +103,14 @@ export const MedicalDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Medical Budget
+              Total Medical Spend (This Year)
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{totalBudget.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-red-600">₹{medicalData.totalMedicalSpend.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Annual medical budget
+              Academic year 2024-25
             </p>
           </CardContent>
         </Card>
@@ -54,14 +118,29 @@ export const MedicalDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Checkups
+              Total Remaining Funds
             </CardTitle>
-            <Heart className="h-4 w-4 text-red-500" />
+            <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCheckups}</div>
+            <div className="text-2xl font-bold text-green-600">₹{medicalData.totalRemainingFunds.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              This academic year
+              All student pools combined
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              Monthly Medical Spend
+            </CardTitle>
+            <Activity className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">₹{medicalData.monthlySpend.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Current month
             </p>
           </CardContent>
         </Card>
@@ -74,24 +153,9 @@ export const MedicalDashboard: React.FC = () => {
             <AlertCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{emergencyCases}</div>
+            <div className="text-2xl font-bold text-red-600">{medicalData.emergencyCases}</div>
             <p className="text-xs text-muted-foreground">
               This month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Monthly Expenses
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{monthlyExpenses.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Current month spending
             </p>
           </CardContent>
         </Card>
@@ -100,32 +164,32 @@ export const MedicalDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Medical Budget Overview</CardTitle>
+            <CardTitle>Medical Expense Overview</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Used Budget</span>
-                  <span>₹{usedBudget.toLocaleString()}</span>
+                  <span>Total Medical Spend</span>
+                  <span>₹{medicalData.totalMedicalSpend.toLocaleString()}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-red-500 h-2 rounded-full" 
-                    style={{ width: `${(usedBudget / totalBudget) * 100}%` }}
+                    style={{ width: `${Math.min((medicalData.totalMedicalSpend / 100000) * 100, 100)}%` }}
                   ></div>
                 </div>
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Remaining Budget</span>
-                  <span>₹{remainingBudget.toLocaleString()}</span>
+                  <span>Remaining Funds</span>
+                  <span>₹{medicalData.totalRemainingFunds.toLocaleString()}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-green-600 h-2 rounded-full" 
-                    style={{ width: `${(remainingBudget / totalBudget) * 100}%` }}
+                    style={{ width: `${Math.min((medicalData.totalRemainingFunds / 300000) * 100, 100)}%` }}
                   ></div>
                 </div>
               </div>
@@ -133,11 +197,11 @@ export const MedicalDashboard: React.FC = () => {
               <div className="pt-4 border-t">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <div className="text-2xl font-bold text-green-600">{totalCheckups - emergencyCases}</div>
+                    <div className="text-2xl font-bold text-green-600">{medicalData.totalCheckups - medicalData.emergencyCases}</div>
                     <p className="text-xs text-muted-foreground">Regular Checkups</p>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-red-600">{emergencyCases}</div>
+                    <div className="text-2xl font-bold text-red-600">{medicalData.emergencyCases}</div>
                     <p className="text-xs text-muted-foreground">Emergency Cases</p>
                   </div>
                 </div>
@@ -148,23 +212,21 @@ export const MedicalDashboard: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Medical Records</CardTitle>
+            <CardTitle>Recent Medical Expenses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentMedicalRecords.map((record) => (
-                <div key={record.id} className="flex items-center justify-between p-3 border rounded-lg">
+              {medicalData.recentExpenses.map((expense) => (
+                <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <h4 className="font-medium">{record.student}</h4>
+                    <h4 className="font-medium">{expense.studentName}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {record.type} • {new Date(record.date).toLocaleDateString()}
+                      {expense.description} • {new Date(expense.date).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right space-y-1">
-                    <div className="font-medium">₹{record.amount.toLocaleString()}</div>
-                    <Badge variant={getPriorityColor(record.priority) as any}>
-                      {record.priority}
-                    </Badge>
+                    <div className="font-medium">₹{expense.amount.toLocaleString()}</div>
+                    {getPriorityBadge(expense.description)}
                   </div>
                 </div>
               ))}
