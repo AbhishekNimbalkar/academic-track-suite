@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -126,7 +125,20 @@ const Attendance: React.FC = () => {
 
       if (error) throw error;
 
-      setAttendanceHistory(data || []);
+      // Properly type the data from Supabase
+      const typedHistory: AttendanceHistoryRecord[] = (data || []).map(record => ({
+        id: record.id,
+        student_id: record.student_id,
+        student_name: record.student_name,
+        class: record.class,
+        medium: record.medium,
+        date: record.date,
+        status: record.status as "present" | "absent" | "leave",
+        comment: record.comment || undefined,
+        created_at: record.created_at
+      }));
+
+      setAttendanceHistory(typedHistory);
     } catch (error) {
       console.error('Error fetching attendance history:', error);
       toast({
