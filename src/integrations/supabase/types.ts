@@ -466,6 +466,48 @@ export type Database = {
         }
         Relationships: []
       }
+      students_attendance: {
+        Row: {
+          class: string
+          comment: string | null
+          created_at: string
+          created_by: string
+          date: string
+          id: string
+          medium: string
+          status: string
+          student_id: string
+          student_name: string
+          updated_at: string
+        }
+        Insert: {
+          class: string
+          comment?: string | null
+          created_at?: string
+          created_by: string
+          date: string
+          id?: string
+          medium: string
+          status: string
+          student_id: string
+          student_name: string
+          updated_at?: string
+        }
+        Update: {
+          class?: string
+          comment?: string | null
+          created_at?: string
+          created_by?: string
+          date?: string
+          id?: string
+          medium?: string
+          status?: string
+          student_id?: string
+          student_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       teacher_class_assignments: {
         Row: {
           assigned_at: string | null
