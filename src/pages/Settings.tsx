@@ -15,13 +15,15 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { FeeStructureSettings } from "@/components/settings/FeeStructureSettings";
 import {
   Settings as SettingsIcon,
   User,
   Bell,
   Shield,
   Mail,
-  MessageSquare
+  MessageSquare,
+  DollarSign
 } from "lucide-react";
 
 const Settings: React.FC = () => {
@@ -118,6 +120,10 @@ const Settings: React.FC = () => {
                       <MessageSquare className="h-4 w-4 mr-2" />
                       SMS Settings
                     </TabsTrigger>
+                    <TabsTrigger value="fee-structure" className="justify-start text-left px-3 py-2">
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Fee Structure
+                    </TabsTrigger>
                   </>
                 )}
                 <TabsTrigger value="notifications" className="justify-start text-left px-3 py-2">
@@ -180,134 +186,138 @@ const Settings: React.FC = () => {
               </TabsContent>
               
               {isAdmin && (
-                <TabsContent value="email" className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Email Settings</CardTitle>
-                      <CardDescription>
-                        Configure email server settings for sending notifications
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">SMTP Configuration</h3>
-                        <Separator />
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="smtpServer">SMTP Server</Label>
-                            <Input 
-                              id="smtpServer" 
-                              value={emailSettings.smtpServer}
-                              onChange={(e) => setEmailSettings({...emailSettings, smtpServer: e.target.value})}
-                            />
+                <>
+                  <TabsContent value="email" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Email Settings</CardTitle>
+                        <CardDescription>
+                          Configure email server settings for sending notifications
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium">SMTP Configuration</h3>
+                          <Separator />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="smtpServer">SMTP Server</Label>
+                              <Input 
+                                id="smtpServer" 
+                                value={emailSettings.smtpServer}
+                                onChange={(e) => setEmailSettings({...emailSettings, smtpServer: e.target.value})}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="port">Port</Label>
+                              <Input 
+                                id="port" 
+                                value={emailSettings.port}
+                                onChange={(e) => setEmailSettings({...emailSettings, port: e.target.value})}
+                              />
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="port">Port</Label>
-                            <Input 
-                              id="port" 
-                              value={emailSettings.port}
-                              onChange={(e) => setEmailSettings({...emailSettings, port: e.target.value})}
-                            />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="username">Username</Label>
+                              <Input 
+                                id="username" 
+                                value={emailSettings.username}
+                                onChange={(e) => setEmailSettings({...emailSettings, username: e.target.value})}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="password">Password</Label>
+                              <Input 
+                                id="password" 
+                                type="password" 
+                                value={emailSettings.password}
+                                onChange={(e) => setEmailSettings({...emailSettings, password: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                          
+                          <h3 className="text-lg font-medium mt-6">Sender Information</h3>
+                          <Separator />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="fromEmail">From Email</Label>
+                              <Input 
+                                id="fromEmail" 
+                                value={emailSettings.fromEmail}
+                                onChange={(e) => setEmailSettings({...emailSettings, fromEmail: e.target.value})}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="fromName">From Name</Label>
+                              <Input 
+                                id="fromName" 
+                                value={emailSettings.fromName}
+                                onChange={(e) => setEmailSettings({...emailSettings, fromName: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="mt-2">
+                            <Button onClick={handleSaveEmailSettings}>Save Email Settings</Button>
+                            <Button variant="outline" className="ml-2">Test Connection</Button>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="sms" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>SMS Settings</CardTitle>
+                        <CardDescription>
+                          Configure SMS gateway settings for sending text notifications
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium">SMS Gateway Configuration</h3>
+                          <Separator />
                           <div className="space-y-2">
-                            <Label htmlFor="username">Username</Label>
+                            <Label htmlFor="smsProvider">SMS Provider</Label>
                             <Input 
-                              id="username" 
-                              value={emailSettings.username}
-                              onChange={(e) => setEmailSettings({...emailSettings, username: e.target.value})}
+                              id="smsProvider" 
+                              value={smsSettings.provider}
+                              onChange={(e) => setSmsSettings({...smsSettings, provider: e.target.value})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="apiKey">API Key</Label>
                             <Input 
-                              id="password" 
+                              id="apiKey" 
                               type="password" 
-                              value={emailSettings.password}
-                              onChange={(e) => setEmailSettings({...emailSettings, password: e.target.value})}
-                            />
-                          </div>
-                        </div>
-                        
-                        <h3 className="text-lg font-medium mt-6">Sender Information</h3>
-                        <Separator />
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="fromEmail">From Email</Label>
-                            <Input 
-                              id="fromEmail" 
-                              value={emailSettings.fromEmail}
-                              onChange={(e) => setEmailSettings({...emailSettings, fromEmail: e.target.value})}
+                              value={smsSettings.apiKey}
+                              onChange={(e) => setSmsSettings({...smsSettings, apiKey: e.target.value})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="fromName">From Name</Label>
+                            <Label htmlFor="senderId">Sender ID</Label>
                             <Input 
-                              id="fromName" 
-                              value={emailSettings.fromName}
-                              onChange={(e) => setEmailSettings({...emailSettings, fromName: e.target.value})}
+                              id="senderId" 
+                              value={smsSettings.senderId}
+                              onChange={(e) => setSmsSettings({...smsSettings, senderId: e.target.value})}
                             />
                           </div>
+                          
+                          <div className="mt-2">
+                            <Button onClick={handleSaveSmsSettings}>Save SMS Settings</Button>
+                            <Button variant="outline" className="ml-2">Test SMS</Button>
+                          </div>
                         </div>
-                        
-                        <div className="mt-2">
-                          <Button onClick={handleSaveEmailSettings}>Save Email Settings</Button>
-                          <Button variant="outline" className="ml-2">Test Connection</Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              )}
-              
-              {isAdmin && (
-                <TabsContent value="sms" className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>SMS Settings</CardTitle>
-                      <CardDescription>
-                        Configure SMS gateway settings for sending text notifications
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">SMS Gateway Configuration</h3>
-                        <Separator />
-                        <div className="space-y-2">
-                          <Label htmlFor="smsProvider">SMS Provider</Label>
-                          <Input 
-                            id="smsProvider" 
-                            value={smsSettings.provider}
-                            onChange={(e) => setSmsSettings({...smsSettings, provider: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="apiKey">API Key</Label>
-                          <Input 
-                            id="apiKey" 
-                            type="password" 
-                            value={smsSettings.apiKey}
-                            onChange={(e) => setSmsSettings({...smsSettings, apiKey: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="senderId">Sender ID</Label>
-                          <Input 
-                            id="senderId" 
-                            value={smsSettings.senderId}
-                            onChange={(e) => setSmsSettings({...smsSettings, senderId: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div className="mt-2">
-                          <Button onClick={handleSaveSmsSettings}>Save SMS Settings</Button>
-                          <Button variant="outline" className="ml-2">Test SMS</Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="fee-structure" className="space-y-6">
+                    <FeeStructureSettings />
+                  </TabsContent>
+                </>
               )}
               
               <TabsContent value="notifications" className="space-y-6">
