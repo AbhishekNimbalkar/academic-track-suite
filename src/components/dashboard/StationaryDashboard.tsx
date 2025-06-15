@@ -84,73 +84,79 @@ export const StationaryDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50 p-6 space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Stationary Dashboard</h1>
+        <p className="text-gray-600">Manage and monitor stationary expenses across all classes</p>
+      </div>
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-blue-700">
               💸 Total Common Expenses
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <DollarSign className="h-5 w-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-800">₹{totalCommonExpenses.toLocaleString()}</div>
-            <p className="text-xs text-blue-600">Across all classes</p>
+            <div className="text-3xl font-bold text-blue-800">₹{totalCommonExpenses.toLocaleString()}</div>
+            <p className="text-xs text-blue-600 mt-1">Across all classes</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-green-700">
               🧾 Total Individual Expenses
             </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-green-600" />
+            <ShoppingCart className="h-5 w-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-800">₹{totalIndividualExpenses.toLocaleString()}</div>
-            <p className="text-xs text-green-600">Student purchases</p>
+            <div className="text-3xl font-bold text-green-800">₹{totalIndividualExpenses.toLocaleString()}</div>
+            <p className="text-xs text-green-600 mt-1">Student purchases</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-emerald-700">
               🔄 Total Remaining Balance
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
+            <TrendingUp className="h-5 w-5 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-800">₹{totalRemainingBalance.toLocaleString()}</div>
-            <p className="text-xs text-emerald-600">Available funds</p>
+            <div className="text-3xl font-bold text-emerald-800">₹{totalRemainingBalance.toLocaleString()}</div>
+            <p className="text-xs text-emerald-600 mt-1">Available funds</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 cursor-pointer hover:shadow-md transition-shadow">
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-red-700">
               ❌ Negative Balance Students
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="h-5 w-5 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-800">{negativeBalanceStudents.length}</div>
-            <p className="text-xs text-red-600">Require attention</p>
+            <div className="text-3xl font-bold text-red-800">{negativeBalanceStudents.length}</div>
+            <p className="text-xs text-red-600 mt-1">Require attention</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters Section */}
-      <Card>
+      <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>🔍 Filters</CardTitle>
+          <CardTitle className="text-xl font-semibold">🔍 Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="month">Select Month / Date Range</Label>
+              <Label htmlFor="month" className="text-sm font-medium">Select Month / Date Range</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="All months" />
                 </SelectTrigger>
                 <SelectContent>
@@ -163,9 +169,9 @@ export const StationaryDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="class">Select Class</Label>
+              <Label htmlFor="class" className="text-sm font-medium">Select Class</Label>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="All classes" />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,12 +185,13 @@ export const StationaryDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="student">Select Student</Label>
+              <Label htmlFor="student" className="text-sm font-medium">Select Student</Label>
               <Input
                 id="student"
                 placeholder="Search student name..."
                 value={selectedStudent}
                 onChange={(e) => setSelectedStudent(e.target.value)}
+                className="w-full"
               />
             </div>
           </div>
@@ -193,144 +200,153 @@ export const StationaryDashboard: React.FC = () => {
 
       {/* Class-wise Expense Table */}
       {!viewingClass && (
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>📊 Class-wise Expense Summary</CardTitle>
+            <CardTitle className="text-xl font-semibold">📊 Class-wise Expense Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Class</TableHead>
-                  <TableHead>No. of Students</TableHead>
-                  <TableHead>Total Common Exp.</TableHead>
-                  <TableHead>Total Individual Exp.</TableHead>
-                  <TableHead>Total Balance</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {classWiseData.map((classData) => (
-                  <TableRow key={classData.class}>
-                    <TableCell className="font-medium">Class {classData.class}</TableCell>
-                    <TableCell>{classData.studentCount}</TableCell>
-                    <TableCell>₹{classData.totalCommonExp.toLocaleString()}</TableCell>
-                    <TableCell>₹{classData.totalIndividualExp.toLocaleString()}</TableCell>
-                    <TableCell className={classData.totalBalance < 0 ? "text-red-600 font-bold" : "text-green-600 font-bold"}>
-                      ₹{classData.totalBalance.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setViewingClass(classData.class)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Details
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Class</TableHead>
+                    <TableHead className="font-semibold">No. of Students</TableHead>
+                    <TableHead className="font-semibold">Total Common Exp.</TableHead>
+                    <TableHead className="font-semibold">Total Individual Exp.</TableHead>
+                    <TableHead className="font-semibold">Total Balance</TableHead>
+                    <TableHead className="font-semibold">Action</TableHead>
                   </TableRow>
-                ))}
-                {classWiseData.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      No data available with current filters
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {classWiseData.map((classData) => (
+                    <TableRow key={classData.class} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">Class {classData.class}</TableCell>
+                      <TableCell>{classData.studentCount}</TableCell>
+                      <TableCell>₹{classData.totalCommonExp.toLocaleString()}</TableCell>
+                      <TableCell>₹{classData.totalIndividualExp.toLocaleString()}</TableCell>
+                      <TableCell className={classData.totalBalance < 0 ? "text-red-600 font-bold" : "text-green-600 font-bold"}>
+                        ₹{classData.totalBalance.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setViewingClass(classData.class)}
+                          className="hover:bg-blue-50"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {classWiseData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                        No data available with current filters
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Student-wise Expense Table (shown when class is selected) */}
       {viewingClass && (
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>👥 Class {viewingClass} - Student-wise Expenses</CardTitle>
-            <Button variant="outline" onClick={() => setViewingClass(null)}>
+            <CardTitle className="text-xl font-semibold">👥 Class {viewingClass} - Student-wise Expenses</CardTitle>
+            <Button variant="outline" onClick={() => setViewingClass(null)} className="hover:bg-gray-50">
               ← Back to Classes
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Fund</TableHead>
-                  <TableHead>Common Exp.</TableHead>
-                  <TableHead>Individual Exp.</TableHead>
-                  <TableHead>Balance</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {classStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
-                    <TableCell>₹{student.fund.toLocaleString()}</TableCell>
-                    <TableCell>₹{student.commonExp.toLocaleString()}</TableCell>
-                    <TableCell>₹{student.individualExp.toLocaleString()}</TableCell>
-                    <TableCell className={student.balance < 0 ? "text-red-600 font-bold" : "text-green-600 font-bold"}>
-                      ₹{student.balance.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(student.status)}
-                        {getStatusText(student.status)}
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Student Name</TableHead>
+                    <TableHead className="font-semibold">Fund</TableHead>
+                    <TableHead className="font-semibold">Common Exp.</TableHead>
+                    <TableHead className="font-semibold">Individual Exp.</TableHead>
+                    <TableHead className="font-semibold">Balance</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
                   </TableRow>
-                ))}
-                {classStudents.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      No students in this class
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {classStudents.map((student) => (
+                    <TableRow key={student.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">{student.name}</TableCell>
+                      <TableCell>₹{student.fund.toLocaleString()}</TableCell>
+                      <TableCell>₹{student.commonExp.toLocaleString()}</TableCell>
+                      <TableCell>₹{student.individualExp.toLocaleString()}</TableCell>
+                      <TableCell className={student.balance < 0 ? "text-red-600 font-bold" : "text-green-600 font-bold"}>
+                        ₹{student.balance.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(student.status)}
+                          <span className={student.status === "good" ? "text-green-600" : "text-red-600"}>
+                            {getStatusText(student.status)}
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {classStudents.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                        No students in this class
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Negative Balance Alert Section */}
       {negativeBalanceStudents.length > 0 && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-red-700 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+            <CardTitle className="text-red-700 flex items-center gap-2 text-xl font-semibold">
+              <AlertTriangle className="h-6 w-6" />
               🚨 Negative Balance Alert
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Balance</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {negativeBalanceStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
-                    <TableCell>Class {student.class}</TableCell>
-                    <TableCell className="text-red-600 font-bold">₹{student.balance.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50">
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        Adjust / Notify
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-red-100">
+                    <TableHead className="font-semibold text-red-800">Student Name</TableHead>
+                    <TableHead className="font-semibold text-red-800">Class</TableHead>
+                    <TableHead className="font-semibold text-red-800">Balance</TableHead>
+                    <TableHead className="font-semibold text-red-800">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {negativeBalanceStudents.map((student) => (
+                    <TableRow key={student.id} className="hover:bg-red-100">
+                      <TableCell className="font-medium">{student.name}</TableCell>
+                      <TableCell>Class {student.class}</TableCell>
+                      <TableCell className="text-red-600 font-bold">₹{student.balance.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50">
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Adjust / Notify
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}
