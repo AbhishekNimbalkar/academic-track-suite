@@ -19,69 +19,58 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save, Edit } from "lucide-react";
+import { Plus, Save, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface MediumFeeStructure {
-  id: string;
-  medium: string;
-  academicYear: string;
-  classFees: ClassFee[];
-  isEditing: boolean;
-}
-
-interface ClassFee {
+interface ClassFeeStructure {
   className: string;
   newStudentFee: number;
   oldStudentFee: number;
   medicalStationaryPool: number;
 }
 
-export const FeeStructureSettings: React.FC = () => {
+interface MediumFeeStructure {
+  id: string;
+  medium: string;
+  academicYear: string;
+  classes: ClassFeeStructure[];
+  isEditing: boolean;
+}
+
+export const MediumFeeStructureSettings: React.FC = () => {
   const { toast } = useToast();
   const [feeStructures, setFeeStructures] = useState<MediumFeeStructure[]>([]);
-  const [classes, setClasses] = useState<{ id: string; className: string; medium: string }[]>([]);
+  const [availableMedia, setAvailableMedia] = useState<string[]>([]);
   const [selectedMedium, setSelectedMedium] = useState<string>("");
   const [academicYear, setAcademicYear] = useState<string>("2024-25");
-  const [availableMedia, setAvailableMedia] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchClasses();
-    fetchFeeStructures();
+    fetchAvailableMedia();
+    loadFeeStructures();
   }, []);
 
-  const fetchClasses = async () => {
+  const fetchAvailableMedia = async () => {
     try {
       const { data, error } = await supabase
         .from('classes')
-        .select('id, class_name, medium')
-        .order('medium', { ascending: true })
-        .order('class_name', { ascending: true });
+        .select('medium')
+        .order('medium');
       
       if (error) throw error;
       
-      const formattedClasses = data.map(cls => ({
-        id: cls.id,
-        className: cls.class_name,
-        medium: cls.medium,
-      }));
-      
-      setClasses(formattedClasses);
-      
-      // Extract unique media
       const uniqueMedia = [...new Set(data.map(cls => cls.medium))];
       setAvailableMedia(uniqueMedia);
     } catch (error) {
-      console.error('Error fetching classes:', error);
+      console.error('Error fetching media:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch classes.",
+        description: "Failed to fetch available media.",
         variant: "destructive",
       });
     }
   };
 
-  const fetchFeeStructures = () => {
+  const loadFeeStructures = () => {
     const saved = localStorage.getItem('mediumFeeStructures');
     if (saved) {
       setFeeStructures(JSON.parse(saved));
@@ -93,7 +82,7 @@ export const FeeStructureSettings: React.FC = () => {
     setFeeStructures(structures);
   };
 
-  const createFeeStructureForMedium = () => {
+  const createFeeStructureForMedium = async () => {
     if (!selectedMedium || !academicYear) {
       toast({
         title: "Validation Error",
@@ -103,57 +92,71 @@ export const FeeStructureSettings: React.FC = () => {
       return;
     }
 
-    // Check if fee structure already exists for this medium and academic year
+    // Check if structure already exists
     const exists = feeStructures.find(
       fs => fs.medium === selectedMedium && fs.academicYear === academicYear
     );
 
     if (exists) {
       toast({
-        title: "Fee Structure Exists",
+        title: "Structure Exists",
         description: "Fee structure for this medium and academic year already exists.",
         variant: "destructive",
       });
       return;
     }
 
-    // Get all classes for the selected medium
-    const mediumClasses = classes.filter(cls => cls.medium === selectedMedium);
-    
-    if (mediumClasses.length === 0) {
+    try {
+      // Fetch all classes for the selected medium
+      const { data: classes, error } = await supabase
+        .from('classes')
+        .select('class_name')
+        .eq('medium', selectedMedium)
+        .order('class_name');
+
+      if (error) throw error;
+
+      if (classes.length === 0) {
+        toast({
+          title: "No Classes Found",
+          description: "No classes found for the selected medium.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const classStructures: ClassFeeStructure[] = classes.map(cls => ({
+        className: cls.class_name,
+        newStudentFee: 9000,
+        oldStudentFee: 7000,
+        medicalStationaryPool: 2000,
+      }));
+
+      const newStructure: MediumFeeStructure = {
+        id: `mfs_${Date.now()}`,
+        medium: selectedMedium,
+        academicYear,
+        classes: classStructures,
+        isEditing: false,
+      };
+
+      const updated = [...feeStructures, newStructure];
+      saveFeeStructures(updated);
+
+      setSelectedMedium("");
+      
       toast({
-        title: "No Classes Found",
-        description: "No classes found for the selected medium.",
+        title: "Fee Structure Created",
+        description: `Fee structure for ${selectedMedium} medium has been created.`,
+      });
+    } catch (error) {
+      console.error('Error creating fee structure:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create fee structure.",
         variant: "destructive",
       });
-      return;
     }
-
-    const classFees: ClassFee[] = mediumClasses.map(cls => ({
-      className: cls.className,
-      newStudentFee: 9000,
-      oldStudentFee: 7000,
-      medicalStationaryPool: 2000,
-    }));
-
-    const newStructure: MediumFeeStructure = {
-      id: `mfs_${Date.now()}`,
-      medium: selectedMedium,
-      academicYear,
-      classFees,
-      isEditing: false,
-    };
-
-    const updated = [...feeStructures, newStructure];
-    saveFeeStructures(updated);
-
-    // Reset form
-    setSelectedMedium("");
-
-    toast({
-      title: "Fee Structure Created",
-      description: `Fee structure for ${selectedMedium} medium has been created.`,
-    });
   };
 
   const toggleEdit = (id: string) => {
@@ -163,13 +166,13 @@ export const FeeStructureSettings: React.FC = () => {
     saveFeeStructures(updated);
   };
 
-  const updateClassFee = (structureId: string, className: string, field: keyof ClassFee, value: number) => {
+  const updateClassFee = (structureId: string, className: string, field: keyof ClassFeeStructure, value: number) => {
     const updated = feeStructures.map(structure => {
       if (structure.id === structureId) {
         return {
           ...structure,
-          classFees: structure.classFees.map(classFee =>
-            classFee.className === className ? { ...classFee, [field]: value } : classFee
+          classes: structure.classes.map(cls =>
+            cls.className === className ? { ...cls, [field]: value } : cls
           )
         };
       }
@@ -178,25 +181,25 @@ export const FeeStructureSettings: React.FC = () => {
     saveFeeStructures(updated);
   };
 
-  const deleteFeeStructure = (id: string) => {
+  const deleteStructure = (id: string) => {
     const updated = feeStructures.filter(fs => fs.id !== id);
     saveFeeStructures(updated);
     
     toast({
-      title: "Fee Structure Deleted",
-      description: "The fee structure has been removed.",
+      title: "Structure Deleted",
+      description: "Fee structure has been removed.",
     });
   };
 
-  const saveEdit = (id: string) => {
+  const saveChanges = (id: string) => {
     const updated = feeStructures.map(fs => 
       fs.id === id ? { ...fs, isEditing: false } : fs
     );
     saveFeeStructures(updated);
     
     toast({
-      title: "Fee Structure Updated",
-      description: "Changes have been saved successfully.",
+      title: "Changes Saved",
+      description: "Fee structure has been updated successfully.",
     });
   };
 
@@ -204,9 +207,9 @@ export const FeeStructureSettings: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Create Fee Structure by Medium</CardTitle>
+          <CardTitle>Medium-wise Fee Structure</CardTitle>
           <CardDescription>
-            Set fee amounts for all classes within a specific medium
+            Create and manage fee structures for all classes within each medium
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -263,7 +266,7 @@ export const FeeStructureSettings: React.FC = () => {
                     {structure.isEditing ? (
                       <Button
                         size="sm"
-                        onClick={() => saveEdit(structure.id)}
+                        onClick={() => saveChanges(structure.id)}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <Save className="h-4 w-4" />
@@ -280,7 +283,7 @@ export const FeeStructureSettings: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => deleteFeeStructure(structure.id)}
+                      onClick={() => deleteStructure(structure.id)}
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -290,10 +293,10 @@ export const FeeStructureSettings: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {structure.classFees.map((classFee, index) => (
-                    <div key={classFee.className} className="border rounded-lg p-4">
+                  {structure.classes.map((classStructure, index) => (
+                    <div key={classStructure.className} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-semibold text-lg">Class {classFee.className}</h4>
+                        <h4 className="font-semibold text-lg">Class {classStructure.className}</h4>
                       </div>
                       
                       {structure.isEditing ? (
@@ -302,24 +305,24 @@ export const FeeStructureSettings: React.FC = () => {
                             <Label>New Student Fee (₹)</Label>
                             <Input
                               type="number"
-                              value={classFee.newStudentFee}
-                              onChange={(e) => updateClassFee(structure.id, classFee.className, 'newStudentFee', Number(e.target.value))}
+                              value={classStructure.newStudentFee}
+                              onChange={(e) => updateClassFee(structure.id, classStructure.className, 'newStudentFee', Number(e.target.value))}
                             />
                           </div>
                           <div className="space-y-1">
                             <Label>Old Student Fee (₹)</Label>
                             <Input
                               type="number"
-                              value={classFee.oldStudentFee}
-                              onChange={(e) => updateClassFee(structure.id, classFee.className, 'oldStudentFee', Number(e.target.value))}
+                              value={classStructure.oldStudentFee}
+                              onChange={(e) => updateClassFee(structure.id, classStructure.className, 'oldStudentFee', Number(e.target.value))}
                             />
                           </div>
                           <div className="space-y-1">
                             <Label>Medical & Stationary Pool (₹)</Label>
                             <Input
                               type="number"
-                              value={classFee.medicalStationaryPool}
-                              onChange={(e) => updateClassFee(structure.id, classFee.className, 'medicalStationaryPool', Number(e.target.value))}
+                              value={classStructure.medicalStationaryPool}
+                              onChange={(e) => updateClassFee(structure.id, classStructure.className, 'medicalStationaryPool', Number(e.target.value))}
                             />
                           </div>
                         </div>
@@ -327,15 +330,15 @@ export const FeeStructureSettings: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <span className="font-medium">New Student Fee:</span>
-                            <p className="text-green-600 font-semibold">₹{classFee.newStudentFee.toLocaleString()}</p>
+                            <p className="text-green-600 font-semibold">₹{classStructure.newStudentFee.toLocaleString()}</p>
                           </div>
                           <div>
                             <span className="font-medium">Old Student Fee:</span>
-                            <p className="text-blue-600 font-semibold">₹{classFee.oldStudentFee.toLocaleString()}</p>
+                            <p className="text-blue-600 font-semibold">₹{classStructure.oldStudentFee.toLocaleString()}</p>
                           </div>
                           <div>
                             <span className="font-medium">Medical & Stationary Pool:</span>
-                            <p className="text-purple-600 font-semibold">₹{classFee.medicalStationaryPool.toLocaleString()}</p>
+                            <p className="text-purple-600 font-semibold">₹{classStructure.medicalStationaryPool.toLocaleString()}</p>
                           </div>
                         </div>
                       )}
